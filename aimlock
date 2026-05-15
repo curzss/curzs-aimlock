@@ -18,18 +18,18 @@ local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/slatt
  
 local NotifyLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/Kinlei/Dynissimo/main/Scripts/AkaliNotif.lua"))()
 local Notify = NotifyLibrary.Notify
-Library.theme.accentcolor = Color3.fromRGB(45, 205, 50)
-Library.theme.accentcolor2 = Color3.fromRGB(45, 205, 50)
+Library.theme.accentcolor = Color3.fromRGB(0, 0, 0)
+Library.theme.accentcolor2 = Color3.fromRGB(255, 255, 255)
  
-local Window = Library:CreateWindow("cam lock - curzs", Vector2.new(492, 598), Enum.KeyCode.P)
+local Window = Library:CreateWindow("CURZS AIMLOCK DAHOOD VERSION", Vector2.new(492, 598), Enum.KeyCode.P)
  
-local AimingTab = Window:CreateTab("cam lock")
+local AimingTab = Window:CreateTab("/fright")
  
-local LegitTab = Window:CreateTab("sub to yt")
+local LegitTab = Window:CreateTab("/fright")
  
-local FunTab = Window:CreateTab("join dc for more")
+local FunTab = Window:CreateTab("/fright")
  
-local MiscTab = Window:CreateTab("luv ya")
+local MiscTab = Window:CreateTab("/fright")
  
 local sector1 = AimingTab:CreateSector("CAMLOCK (Q)", "left")
  
@@ -332,4 +332,318 @@ sector1:AddButton("EXECUTE", function()
 			end
  
 			if CamLockTable.Settings.Smoothing.enable then
-				local goal = CFrame.
+				local goal = CFrame.new(Camera.CFrame.Position, position + (CamLockTable.Settings.Prediction[1] * GetPrediction() or Vector3.new()))
+				Camera.CFrame = Camera.CFrame:Lerp(goal, CamLockTable.Settings.Smoothing.x, CamLockTable.Settings.Smoothing.y)
+			else
+				local prediction = CamLockTable.Settings.Prediction[1] and Storage.targets[1].Character.HumanoidRootPart.AssemblyLinearVelocity * GetPrediction() or Vector3.new()
+				Camera.CFrame = CFrame.new(Camera.CFrame.Position, position + prediction)
+			end
+		end
+	end
+ 
+	do -- main connection
+ 
+		NewConnection(UserInput.InputBegan, function(key, wtv)
+			if key.KeyCode == Enum.KeyCode[getgenv().NemesisPreBeta.Camlock.Toggling.Keybind:upper()] and not wtv then
+				if getgenv().NemesisPreBeta.Camlock.Toggling.Enable then
+					Storage.etc.Ctoggled = not Storage.etc.Ctoggled
+					Storage.targets[1] = GetClosest(getgenv().NemesisPreBeta.Camlock.Conditions.Player)
+ 
+					if  Storage.targets[1] and  Storage.targets[1].Character then
+						Storage.bodyparts[1] = tostring(Closespart(Storage.targets[1], getgenv().NemesisPreBeta.Camlock.Conditions.BodyParts))
+ 
+					end
+				else
+					if  Storage.targets[1] ~= nil then
+						Storage.targets[1] = nil
+					end
+				end
+			end
+		end)
+ 
+		NewConnection(UserInput.InputBegan, function(key, wtv)
+			if getgenv().NemesisPreBeta.Settings.Disabling.Toggle and key.KeyCode == Enum.KeyCode[getgenv().NemesisPreBeta.Settings.Disabling.Keybind:upper()]  and not wtv then
+				for i,v in pairs(Storage.Connections) do
+					if v then
+						v:Disconnect()
+					end
+				end
+				for i,v in pairs(Storage.Drawings) do
+					if v and v.__OBJECT_EXISTS then
+						print("f")
+					end
+				end
+			end
+		end)
+ 
+		NewConnection(UserInput.InputBegan, function(key, wtv)
+			if getgenv().NemesisPreBeta.Miscs.Sorting.Toggled and key.KeyCode == Enum.KeyCode[getgenv().NemesisPreBeta.Miscs.Sorting.Key:upper()] and not wtv then
+				local items = {}
+ 
+				if getgenv().NemesisPreBeta.Miscs.Sorting.Custom.Enable then
+					for _, customName in ipairs(getgenv().NemesisPreBeta.Miscs.Sorting.Custom.List) do
+						for _, item in pairs(backpack:GetChildren()) do
+							if item:IsA("Tool") and item.Name == customName then
+								table.insert(items, 1, item)
+								break
+							end
+						end
+					end
+				end
+ 
+				for _, item in pairs(backpack:GetChildren()) do
+					if item:IsA("Tool") and (not getgenv().NemesisPreBeta.Miscs.Sorting.Custom.Enable or not isInCustomList(item.Name)) then
+						table.insert(items, item)
+					end
+				end
+ 
+				if getgenv().NemesisPreBeta.Miscs.Sorting.alphabetically and not getgenv().NemesisPreBeta.Miscs.Sorting.Custom.Enable then
+					table.sort(items, function(a, b)
+						return a.Name < b.Name
+					end)
+				end
+ 
+				if getgenv().NemesisPreBeta.Miscs.Sorting.Ammo and not getgenv().NemesisPreBeta.Miscs.Sorting.Custom.Enable then
+					table.sort(items, function(a, b)
+						return a.Value > b.Value
+					end)
+				end
+ 
+				for _, item in ipairs(items) do
+					item.Parent = nil
+					wait(0.01)
+					item.Parent = backpack
+				end
+ 
+			end
+		end)
+ 
+		NewConnection(UserInput.InputBegan, function(key, wtv)
+			if getgenv().NemesisPreBeta.Miscs.Animation.Enable and not wtv then
+				for animationName, animationData in pairs(getgenv().NemesisPreBeta.Miscs.Animation.Animations) do
+					if animationData[1] and key.KeyCode == Enum.KeyCode[animationData[2]] then
+						playAnimation(animationName)
+						break
+					end
+				end
+			end
+		end)
+ 
+ 
+ 
+ 
+		NewConnection(Rservice.Heartbeat, function()
+ 
+			--//  camlock
+			Thread(UpdateCamlock())
+ 
+			--// Silent UPDATE
+			Thread(UpdateSilent())
+ 
+		end)
+	end
+ 
+ 
+	for connection, index in next, getconnections(workspace.CurrentCamera.Changed) do
+		index:Disable()
+	end
+	for connection, index in next, getconnections(workspace.CurrentCamera:GetPropertyChangedSignal("CFrame")) do
+		index:Disable()
+	end
+ 
+ 
+	local oldIndex
+	oldIndex = hookmetamethod(game, "__index", function(t, k)
+		if t:IsA("Mouse") and k == "Hit" or k == "Target" then
+			if  getgenv().NemesisPreBeta.Silent.Toggling.Enable and Chance(getgenv().NemesisPreBeta.Silent.Settings.HitChance, 100) and Storage.targets[2] ~= nil then
+				local Hit = CFrame.new(Storage.CFposition)
+				return (k == "Hit" and Hit)
+			end
+		end
+		return oldIndex(t, k)
+	end)
+end)
+ 
+ 
+ 
+-- Integration of the provided scripts
+ 
+local Settings1 = {
+	range1 = 500,
+	range2 = 800,
+}
+ 
+for __, v in pairs(game.CoreGui.RobloxGui.PerformanceStats:GetChildren()) do
+	if v.Name == "PS_Button" and v.StatsMiniTextPanelClass.TitleLabel.Text == "Mem" then
+		Memory = v.StatsMiniTextPanelClass.ValueLabel
+	end
+end
+ 
+Memory:GetPropertyChangedSignal("Text"):Connect(function()
+	local Random = math.random(Settings1.range1, Settings1.range2)
+	Random = Random * 1.23 
+	Memory.Text = "".. Random .." MB"
+end)
+ 
+local Settings2 = {
+	range1 = 423,
+	range2 = 1782,
+}
+ 
+local PerformanceStats = game:GetService("CoreGui"):WaitForChild("RobloxGui"):WaitForChild("PerformanceStats")
+local PingLabel
+ 
+for _, Child in next, PerformanceStats:GetChildren() do
+	if Child.StatsMiniTextPanelClass.TitleLabel.Text == "Ping" then
+		PingLabel = Child.StatsMiniTextPanelClass.ValueLabel
+		break
+	end
+end
+ 
+local text = "0.00 ms"
+PingLabel:GetPropertyChangedSignal("Text"):Connect(function()
+	local RandomPing = math.random(Settings2.range1, Settings2.range2) / 100
+	PingLabel.Text = string.format("%.2f ms", RandomPing)
+end)
+ 
+local sector3 = FunTab:CreateSector("Resolution", "right")
+ 
+sector3:AddButton("Stretch Resolution", function()
+	getgenv().Resolution = {
+		[" "] = 0.65
+	}
+ 
+	local Camera = workspace.CurrentCamera
+	if getgenv().gg_scripters == nil then
+		game:GetService("RunService").RenderStepped:Connect(
+		function()
+			Camera.CFrame = Camera.CFrame * CFrame.new(0, 0, 0, 1, 0, 0, 0, getgenv().Resolution[" "], 0, 0, 0, 1)
+		end
+		)
+	end
+	getgenv().gg_scripters = " "
+end)
+ 
+local sector4 = MiscTab:CreateSector("NO DELAY", "right")
+ 
+sector4:AddButton("EXECUTE", function()
+	local ReplicatedStorage = game.ReplicatedStorage
+	local Network = game.Network
+	local Delay = ReplicatedStorage.BulletHole.Delay
+ 
+	Delay.Position:Destroy()
+	Delay.Position = 0
+end)
+ 
+ 
+local sector6 = LegitTab:CreateSector("Anti-AimViewer", "left")
+ 
+sector6:AddButton("EXECUTE", function()
+	local China = setmetatable({}, {
+		__index = function(Company, Price)
+			return game:GetService(Price)
+		end})
+ 
+	local Players = China.Players
+	local ReplicatedStorage = China.ReplicatedStorage
+ 
+	--//Variables
+	local LocalPlayer = Players.LocalPlayer
+	local Mouse =  LocalPlayer:GetMouse()
+ 
+	local MainEvent = ReplicatedStorage:FindFirstChild("MainEvent") or nil
+	local Tool = nil
+ 
+	Bypass = function(Entity)
+		Entity.ChildAdded:Connect(function(Child)
+			if Child:IsA("Tool") then
+				Tool = Child.Activated:Connect(function()
+					if MainEvent then
+						MainEvent:FireServer("UpdateMousePos", Mouse.Hit.Position)
+					end
+				end)
+			end
+		end)
+	end
+ 
+ 
+ 
+	local Alive = function(Player)
+		return Player and Player.Character and Player.Character:FindFirstChild("Humanoid") and Player.Character:FindFirstChild("Head") or false
+	end
+ 
+	LocalPlayer.CharacterAdded:Connect(function(Character)
+		Bypass(Character)
+	end)
+ 
+	if Alive(LocalPlayer) then
+		LocalPlayer.Character.Humanoid:UnequipTools()
+		Bypass(LocalPlayer.Character)
+	end
+ 
+	local Hook
+	Hook = hookmetamethod(game, "__namecall", function(self, ...)
+		local Args = {...}
+		local Method = getnamecallmethod()
+ 
+		if not checkcaller() and Method == "FireServer" and self.Name == "MainEvent" and Args[1] == "UpdateMousePos" then
+ 
+			Args[2] = "curzs made this" and Mouse.Hit.Position
+ 
+			return self.FireServer(self, unpack(Args))
+		end
+ 
+		return Hook(self, ...)
+	end)
+end)
+ 
+local sector7 = LegitTab:CreateSector("Legit-AntiLock-V1", "right")
+ 
+sector7:AddButton("EXECUTE", function()
+	getgenv().Underground = true 
+	getgenv().UndergroundAmount = 90
+ 
+	game:GetService("RunService").heartbeat:Connect(function()
+		if getgenv().Underground ~= false then 
+			local vel = game.Players.LocalPlayer.Character.HumanoidRootPart.Velocity
+			game.Players.LocalPlayer.Character.HumanoidRootPart.Velocity = Vector3.new(0,-         getgenv().UndergroundAmount,0) 
+			game:GetService("RunService").RenderStepped:Wait()
+			game.Players.LocalPlayer.Character.HumanoidRootPart.Velocity = vel
+		end 
+	end)
+end)
+ 
+local sector8 = MiscTab:CreateSector("AUTO RELOAD", "left")
+ 
+sector8:AddButton("EXECUTE", function()
+	_G.AutoReload = true -- change to false if u don't want it anymore.
+ 
+	while _G.AutoReload == true and game:GetService("RunService").Heartbeat:Wait() do
+		if game:GetService("Players").LocalPlayer.Character:FindFirstChildWhichIsA("Tool") then
+			if game:GetService("Players").LocalPlayer.Character:FindFirstChildWhichIsA("Tool"):FindFirstChild("Ammo") then
+				if game:GetService("Players").LocalPlayer.Character:FindFirstChildWhichIsA("Tool"):FindFirstChild("Ammo").Value <= 0 then
+					game:GetService("ReplicatedStorage").MainEvent:FireServer("Reload", game:GetService("Players").LocalPlayer.Character:FindFirstChildWhichIsA("Tool")) 
+					wait(1)
+				end
+			end
+		end
+	end
+end)
+ 
+ 
+local sector12 = FunTab:CreateSector("CALL ALL", "left")
+ 
+sector12:AddButton("EXECUTE", function()
+	local StarterGui = game:GetService("StarterGui")
+	for i,v in pairs(game.Players:GetChildren()) do
+		if v.Name ~= game.Players.LocalPlayer.Name then
+			game.Players.LocalPlayer.Backpack["[Phone]"].Parent = game.Players.LocalPlayer.Character
+			game.ReplicatedStorage.MainEvent:FireServer("PhoneCall", tostring(v.Name))
+			task.wait()
+			game.Players.LocalPlayer.Character["[Phone]"].Parent = game.Players.LocalPlayer.Backpack
+			task.wait()
+			local success, result = pcall(StarterGui.SetCoreGuiEnabled, StarterGui, Enum.CoreGuiType.Backpack, true)
+			task.wait(.2)
+		end
+	end
+end)
