@@ -21,15 +21,15 @@ local Notify = NotifyLibrary.Notify
 Library.theme.accentcolor = Color3.fromRGB(0, 0, 0)
 Library.theme.accentcolor2 = Color3.fromRGB(255, 255, 255)
  
-local Window = Library:CreateWindow("CURZS AIMLOCK DAHOOD VERSION", Vector2.new(492, 598), Enum.KeyCode.P)
+local Window = Library:CreateWindow("CURZS LOCK", Vector2.new(492, 598), Enum.KeyCode.P)
  
-local AimingTab = Window:CreateTab("/fright")
+local AimingTab = Window:CreateTab("sub to me")
  
-local LegitTab = Window:CreateTab("/fright")
+local LegitTab = Window:CreateTab("hi")
  
-local FunTab = Window:CreateTab("/fright")
+local FunTab = Window:CreateTab("ily")
  
-local MiscTab = Window:CreateTab("/fright")
+local MiscTab = Window:CreateTab("yt curzs")
  
 local sector1 = AimingTab:CreateSector("CAMLOCK (Q)", "left")
  
