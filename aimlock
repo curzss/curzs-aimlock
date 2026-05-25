@@ -31,9 +31,9 @@ local FunTab = Window:CreateTab("ily")
  
 local MiscTab = Window:CreateTab("yt curzs")
  
-local sector1 = AimingTab:CreateSector("CAMLOCK (Q)", "left")
+local sector1 = AimingTab:CreateSector("lock = q", "left")
  
-sector1:AddButton("EXECUTE", function()
+sector1:AddButton("press this", function()
 	getgenv().NemesisPreBeta = {
 		["Settings"] = {
 			Disabling = {Toggle = false, Keybind = "H"},
