@@ -46,7 +46,7 @@ sector1:AddButton("EXECUTE", function()
 			},
 			Settings = {
 				Prediction = { 
-					true, 
+					false, 
 					.11934, 
 					false, 
 					.003
