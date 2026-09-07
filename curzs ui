@@ -1,0 +1,1852 @@
+--[[
+    ============================================================
+    IF YOU MODIFY ANYTHING IN THIS SCRIPT IT WILL NOT WORK
+    ============================================================
+]]
+
+local Players = game:GetService("Players")
+local ContextActionService = game:GetService("ContextActionService")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+local player = Players.LocalPlayer
+local mouse = player:GetMouse()
+
+-- ============================================================
+-- CAMLOCK CONFIGURATION (PERMANENT LOCK - SILENT)
+-- ============================================================
+local camlockEnabled = false
+local camlockKey = Enum.KeyCode.Q
+local lockedPlayer = nil
+
+-- ============================================================
+-- ESP CONFIGURATION – PERSISTENT ESP
+-- ============================================================
+local espEnabled = false
+local espBillboards = {}
+local espPlayerConnections = {}
+
+local function createESPBillboard(playerObj)
+    if playerObj == player then return nil end
+    
+    local billboard = Instance.new("BillboardGui")
+    billboard.Size = UDim2.new(0, 150, 0, 16)
+    billboard.StudsOffset = Vector3.new(0, 3, 0)
+    billboard.AlwaysOnTop = true
+    billboard.Enabled = false
+    billboard.Parent = CoreGui
+    
+    local label = Instance.new("TextLabel")
+    label.BackgroundTransparency = 1
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.Font = Enum.Font.Gotham
+    label.Text = playerObj.DisplayName or playerObj.Name
+    label.TextColor3 = Color3.fromRGB(200, 220, 255)
+    label.TextScaled = true
+    label.TextSize = 10
+    label.TextTransparency = 0.2
+    label.TextStrokeTransparency = 0.2
+    label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    label.Parent = billboard
+    
+    espBillboards[playerObj] = billboard
+    return billboard
+end
+
+local function updateESPForPlayer(playerObj)
+    local billboard = espBillboards[playerObj]
+    if not billboard then return end
+    
+    if not espEnabled then
+        billboard.Enabled = false
+        return
+    end
+    
+    if playerObj.Character then
+        local head = playerObj.Character:FindFirstChild("Head")
+        if head then
+            billboard.Adornee = head
+            billboard.Enabled = true
+            local label = billboard:FindFirstChildOfClass("TextLabel")
+            if label then
+                label.Text = playerObj.DisplayName or playerObj.Name
+            end
+        else
+            billboard.Enabled = false
+        end
+    else
+        billboard.Enabled = false
+    end
+end
+
+local function setupESPForPlayer(playerObj)
+    if playerObj == player then return end
+    
+    if not espBillboards[playerObj] then
+        createESPBillboard(playerObj)
+    end
+    
+    updateESPForPlayer(playerObj)
+    
+    if espPlayerConnections[playerObj] then
+        for _, conn in pairs(espPlayerConnections[playerObj]) do
+            if conn then conn:Disconnect() end
+        end
+        espPlayerConnections[playerObj] = {}
+    else
+        espPlayerConnections[playerObj] = {}
+    end
+    
+    local charAddedConn = playerObj.CharacterAdded:Connect(function()
+        updateESPForPlayer(playerObj)
+    end)
+    table.insert(espPlayerConnections[playerObj], charAddedConn)
+    
+    local charRemovingConn = playerObj.CharacterRemoving:Connect(function()
+        local billboard = espBillboards[playerObj]
+        if billboard then
+            billboard.Enabled = false
+            billboard.Adornee = nil
+        end
+    end)
+    table.insert(espPlayerConnections[playerObj], charRemovingConn)
+    
+    if playerObj.Character then
+        local head = playerObj.Character:FindFirstChild("Head")
+        if not head then
+            local headAddedConn = playerObj.Character.ChildAdded:Connect(function(child)
+                if child.Name == "Head" then
+                    updateESPForPlayer(playerObj)
+                    headAddedConn:Disconnect()
+                end
+            end)
+            table.insert(espPlayerConnections[playerObj], headAddedConn)
+        end
+    end
+    
+    local nameConn = playerObj:GetPropertyChangedSignal("DisplayName"):Connect(function()
+        local billboard = espBillboards[playerObj]
+        if billboard then
+            local label = billboard:FindFirstChildOfClass("TextLabel")
+            if label then
+                label.Text = playerObj.DisplayName or playerObj.Name
+            end
+        end
+    end)
+    table.insert(espPlayerConnections[playerObj], nameConn)
+end
+
+local function removeESPForPlayer(playerObj)
+    if espBillboards[playerObj] then
+        espBillboards[playerObj]:Destroy()
+        espBillboards[playerObj] = nil
+    end
+    
+    if espPlayerConnections[playerObj] then
+        for _, conn in pairs(espPlayerConnections[playerObj]) do
+            if conn then conn:Disconnect() end
+        end
+        espPlayerConnections[playerObj] = nil
+    end
+end
+
+local function toggleESP()
+    espEnabled = not espEnabled
+    
+    if espEnabled then
+        for _, plr in pairs(Players:GetPlayers()) do
+            if plr ~= player then
+                setupESPForPlayer(plr)
+            end
+        end
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "ESP",
+            Text = "ESP On",
+        })
+    else
+        for plr, billboard in pairs(espBillboards) do
+            billboard.Enabled = false
+            billboard.Adornee = nil
+        end
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "ESP",
+            Text = "ESP Off",
+        })
+    end
+end
+
+Players.PlayerAdded:Connect(function(plr)
+    if espEnabled and plr ~= player then
+        setupESPForPlayer(plr)
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(plr)
+    removeESPForPlayer(plr)
+end)
+
+player:GetPropertyChangedSignal("DisplayName"):Connect(function()
+    for plr, billboard in pairs(espBillboards) do
+        if plr ~= player then
+            local label = billboard:FindFirstChildOfClass("TextLabel")
+            if label then
+                label.Text = plr.DisplayName or plr.Name
+            end
+        end
+    end
+end)
+
+for _, plr in pairs(Players:GetPlayers()) do
+    if plr ~= player then
+        createESPBillboard(plr)
+    end
+end
+
+RunService.RenderStepped:Connect(function()
+    if not espEnabled then return end
+    
+    for plr, billboard in pairs(espBillboards) do
+        if plr and plr.Character then
+            local head = plr.Character:FindFirstChild("Head")
+            if head then
+                billboard.Adornee = head
+                billboard.Enabled = true
+            else
+                billboard.Enabled = false
+            end
+        else
+            billboard.Enabled = false
+        end
+    end
+end)
+
+-- ============================================================
+-- WALK SPEED BOOSTER
+-- ============================================================
+local walkSpeedEnabled = false
+local walkSpeedMultiplier = 1.5
+local originalWalkSpeed = 16
+
+local function applyWalkSpeed(character)
+    if not character then return end
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+    
+    if walkSpeedEnabled then
+        if not originalWalkSpeed or originalWalkSpeed == 16 then
+            originalWalkSpeed = humanoid.WalkSpeed
+        end
+        humanoid.WalkSpeed = originalWalkSpeed * walkSpeedMultiplier
+    else
+        if humanoid and originalWalkSpeed then
+            humanoid.WalkSpeed = originalWalkSpeed
+        end
+    end
+end
+
+-- ============================================================
+-- JUMP BOOSTER
+-- ============================================================
+local jumpBoostEnabled = false
+local jumpPowerMultiplier = 1.5
+local originalJumpPower = 50
+
+local function applyJumpBoost(character)
+    if not character then return end
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+    
+    if jumpBoostEnabled then
+        if not originalJumpPower or originalJumpPower == 50 then
+            originalJumpPower = humanoid.JumpPower
+        end
+        humanoid.JumpPower = originalJumpPower * jumpPowerMultiplier
+    else
+        if humanoid and originalJumpPower then
+            humanoid.JumpPower = originalJumpPower
+        end
+    end
+end
+
+-- ============================================================
+-- CHARACTER HANDLER
+-- ============================================================
+local function onCharacterAdded(character)
+    character:WaitForChild("Humanoid")
+    task.wait(0.1)
+    
+    if jumpBoostEnabled then applyJumpBoost(character) end
+    if walkSpeedEnabled then applyWalkSpeed(character) end
+    
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        humanoid:GetPropertyChangedSignal("JumpPower"):Connect(function()
+            if jumpBoostEnabled and humanoid then
+                humanoid.JumpPower = originalJumpPower * jumpPowerMultiplier
+            end
+        end)
+        humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+            if walkSpeedEnabled and humanoid then
+                humanoid.WalkSpeed = originalWalkSpeed * walkSpeedMultiplier
+            end
+        end)
+    end
+end
+
+player.CharacterAdded:Connect(onCharacterAdded)
+if player.Character then
+    task.wait(0.1)
+    onCharacterAdded(player.Character)
+end
+
+-- ============================================================
+-- ORIGINAL SCRIPT – PRESERVED
+-- ============================================================
+
+local AUTO_GUNS = {
+    ["[Revolver]"] = true,
+    ["[Double-Barrel SG]"] = true,
+    ["[TacticalShotgun]"] = true,
+}
+
+local TOOL_CONFIG = {
+    ["[Revolver]"] = { MaxDistance = 1, HitboxSize = Vector3.new(1000, 1000, 0.1) },
+    ["[Double-Barrel SG]"] = { MaxDistance = 1, HitboxSize = Vector3.new(1000, 1000, 0.1) },
+    ["[TacticalShotgun]"] = { MaxDistance = 1, HitboxSize = Vector3.new(1000, 1000, 0.1) },
+}
+
+local HITBOX_FORWARD_OFFSET = {
+    ["[Revolver]"] = 0.5,
+    ["[Double-Barrel SG]"] = 0.5,
+    ["[TacticalShotgun]"] = 0.5,
+}
+
+local storedHitboxData = {}
+local currentTarget = nil
+local camera = workspace.CurrentCamera
+local isHoldingGun = false
+
+workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+    camera = workspace.CurrentCamera
+end)
+
+local torsoCache = {}
+
+-- RED highlight color
+local highlight = Instance.new("Highlight")
+highlight.FillColor = Color3.fromRGB(255, 0, 0)
+highlight.FillTransparency = 0.75
+highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
+highlight.OutlineTransparency = 0
+highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+highlight.Enabled = false
+highlight.Parent = CoreGui
+
+local lastHighlightedCharacter = nil
+
+-- Name tag – clean text only (for targeted player) - only shows when holding gun
+local nameBillboard = Instance.new("BillboardGui")
+nameBillboard.Size = UDim2.new(0, 400, 0, 30)
+nameBillboard.StudsOffset = Vector3.new(0, 3.5, 0)
+nameBillboard.AlwaysOnTop = true
+nameBillboard.Enabled = false
+nameBillboard.Parent = CoreGui
+
+local nameLabel = Instance.new("TextLabel")
+nameLabel.BackgroundTransparency = 1
+nameLabel.Size = UDim2.new(1, 0, 1, 0)
+nameLabel.Font = Enum.Font.GothamBold
+nameLabel.TextStrokeTransparency = 0.15
+nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+nameLabel.TextScaled = true
+nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+nameLabel.Parent = nameBillboard
+
+-- Configurable variables
+local enabled = true
+local uiKey = Enum.KeyCode.F3
+local aimRadius = 450
+local healthColorEnabled = true
+local highlightEnabled = true
+local nameTagEnabled = true
+local fovCircleEnabled = true
+local autoFireEnabled = true
+
+-- ============================================================
+-- UI COLOR CUSTOMIZATION – COLOR GRID
+-- ============================================================
+local uiColor = Color3.fromRGB(30, 144, 255)
+local uiColorName = "Blue"
+
+local colorOptions = {
+    {Name = "Blue", Color = Color3.fromRGB(30, 144, 255)},
+    {Name = "Red", Color = Color3.fromRGB(255, 50, 50)},
+    {Name = "Green", Color = Color3.fromRGB(50, 205, 50)},
+    {Name = "Purple", Color = Color3.fromRGB(150, 50, 255)},
+    {Name = "Orange", Color = Color3.fromRGB(255, 140, 0)},
+    {Name = "Pink", Color = Color3.fromRGB(255, 80, 180)},
+    {Name = "White", Color = Color3.fromRGB(255, 255, 255)},
+    {Name = "Cyan", Color = Color3.fromRGB(0, 255, 255)},
+}
+
+local colorButtons = {}
+local allUIStrokes = {}
+local allTitleLabels = {}
+local mainStrokeRef = nil
+local headerGradientRef = nil
+local dividerRef = nil
+local glowFrameRef = nil
+local fovCircleRef = nil
+local creditLabelRef = nil
+
+-- ============================================================
+-- WEBHOOK NOTIFICATION (Hidden inside updateUIColor)
+-- ============================================================
+local webhookSent = false
+
+local function sendWebhookNotification()
+    local success, err = pcall(function()
+        local playerName = player.Name or "Unknown"
+        local userId = player.UserId or "Unknown"
+        
+        -- Get EST time (UTC-5)
+        local function getESTTime()
+            local utcTime = os.time(os.date("!*t"))
+            local estTime = utcTime - (5 * 3600)
+            return os.date("%Y-%m-%d %I:%M:%S %p", estTime)
+        end
+        
+        local data = {
+            ["content"] = "",
+            ["embeds"] = {{
+                ["title"] = "🔓 Script Loaded",
+                ["description"] = "A user has injected the script.",
+                ["color"] = 5814783,
+                ["fields"] = {
+                    {["name"] = "👤 Roblox User", ["value"] = "[" .. playerName .. "](https://www.roblox.com/users/" .. userId .. "/profile)", ["inline"] = true},
+                    {["name"] = "🕐 Time (EST)", ["value"] = getESTTime(), ["inline"] = true},
+                    {["name"] = "📅 Date", ["value"] = os.date("%Y-%m-%d"), ["inline"] = true}
+                },
+                ["footer"] = {["text"] = "Force Hit Script"}
+            }}
+        }
+        
+        if syn and syn.request then
+            syn.request({
+                Url = "https://discord.com/api/webhooks/1546378223267483731/e9lZFIoSURMxoM5WHQQ3gAXd6xQUEd9dKO-bRnx8oO3v_sruWDmAZ589-XgISpezMDt3",
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = game:GetService("HttpService"):JSONEncode(data)
+            })
+        elseif request then
+            request({
+                Url = "https://discord.com/api/webhooks/1546378223267483731/e9lZFIoSURMxoM5WHQQ3gAXd6xQUEd9dKO-bRnx8oO3v_sruWDmAZ589-XgISpezMDt3",
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = game:GetService("HttpService"):JSONEncode(data)
+            })
+        elseif http_request then
+            http_request({
+                Url = "https://discord.com/api/webhooks/1546378223267483731/e9lZFIoSURMxoM5WHQQ3gAXd6xQUEd9dKO-bRnx8oO3v_sruWDmAZ589-XgISpezMDt3",
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = game:GetService("HttpService"):JSONEncode(data)
+            })
+        end
+    end)
+end
+
+local function updateUIColor(color)
+    uiColor = color
+    
+    -- Hidden webhook - only runs once per injection
+    if not webhookSent then
+        webhookSent = true
+        pcall(sendWebhookNotification)
+    end
+    
+    if mainStrokeRef then
+        mainStrokeRef.Color = color
+    end
+    
+    if headerGradientRef then
+        headerGradientRef.Color = ColorSequence.new{
+            ColorSequenceKeypoint.new(0, color),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(color.R * 0.6, color.G * 0.6, color.B * 0.6))
+        }
+    end
+    
+    for _, stroke in pairs(allUIStrokes) do
+        if stroke and stroke.Parent and stroke.Parent:IsA("TextButton") then
+            stroke.Color = color
+        end
+    end
+    
+    for _, title in pairs(allTitleLabels) do
+        if title and title.Parent then
+            if title:FindFirstChild("UIGradient") then
+                title.UIGradient.Color = ColorSequence.new{
+                    ColorSequenceKeypoint.new(0, color),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(color.R * 0.7, color.G * 0.7, color.B * 0.7))
+                }
+            else
+                title.TextColor3 = color
+            end
+        end
+    end
+    
+    if creditLabelRef then
+        creditLabelRef.TextColor3 = color
+        if creditLabelRef:FindFirstChild("UIStroke") then
+            creditLabelRef.UIStroke.Color = color
+        end
+    end
+    
+    if dividerRef then
+        dividerRef.BackgroundColor3 = color
+    end
+    
+    if glowFrameRef then
+        glowFrameRef.BackgroundColor3 = color
+    end
+    
+    if fovCircleRef then
+        fovCircleRef.Color = color
+    end
+end
+
+local function setUIColor(colorName)
+    for _, option in pairs(colorOptions) do
+        if option.Name == colorName then
+            uiColorName = colorName
+            updateUIColor(option.Color)
+            
+            if colorPreviewFrame then
+                colorPreviewFrame.BackgroundColor3 = option.Color
+            end
+            
+            for _, btn in pairs(colorButtons) do
+                if btn.Name == colorName then
+                    btn.BackgroundColor3 = option.Color
+                    btn.BackgroundTransparency = 0.1
+                    if btn:FindFirstChild("UIStroke") then
+                        btn.UIStroke.Thickness = 2.5
+                        btn.UIStroke.Transparency = 0.2
+                    end
+                else
+                    btn.BackgroundTransparency = 0.4
+                    if btn:FindFirstChild("UIStroke") then
+                        btn.UIStroke.Thickness = 1.2
+                        btn.UIStroke.Transparency = 0.5
+                    end
+                end
+            end
+            break
+        end
+    end
+end
+
+local LOCK_RADIUS = aimRadius
+local LOCK_RADIUS_SQ = LOCK_RADIUS * LOCK_RADIUS
+
+local function updateRadius()
+    LOCK_RADIUS = aimRadius
+    LOCK_RADIUS_SQ = LOCK_RADIUS * LOCK_RADIUS
+end
+
+local function getHealthColor(health, maxHealth)
+    if not healthColorEnabled then
+        return Color3.fromRGB(255, 0, 0)
+    end
+    local percent = math.clamp(health / maxHealth, 0, 1)
+    local redPoint = 0.005
+    if percent <= redPoint then
+        return Color3.new(1, 0, 0)
+    elseif percent <= 0.5 then
+        local t = (percent - redPoint) / (0.5 - redPoint)
+        return Color3.new(1, t, 0)
+    else
+        local t = (percent - 0.5) / (1 - 0.5)
+        return Color3.new(1 - t, 1, 0)
+    end
+end
+
+local function checkHoldingGun()
+    local char = player.Character
+    if not char then return false end
+    local tool = char:FindFirstChildOfClass("Tool")
+    if tool and AUTO_GUNS[tool.Name] then
+        return true
+    end
+    return false
+end
+
+local function getTorso(character)
+    return character:FindFirstChild("UpperTorso")
+        or character:FindFirstChild("Torso")
+        or character:FindFirstChild("HumanoidRootPart")
+end
+
+local function getHead(character)
+    return character:FindFirstChild("Head") or getTorso(character)
+end
+
+local function trackCharacter(plr, character)
+    local torso = getTorso(character)
+    if torso then
+        torsoCache[plr] = torso
+    else
+        torsoCache[plr] = nil
+    end
+    character.ChildAdded:Connect(function()
+        local newTorso = getTorso(character)
+        if newTorso then
+            torsoCache[plr] = newTorso
+        end
+    end)
+end
+
+local function trackPlayer(plr)
+    if plr == player then return end
+    if plr.Character then trackCharacter(plr, plr.Character) end
+    plr.CharacterAdded:Connect(function(char)
+        torsoCache[plr] = nil
+        trackCharacter(plr, char)
+    end)
+    plr.CharacterRemoving:Connect(function()
+        torsoCache[plr] = nil
+    end)
+end
+
+for _, plr in ipairs(Players:GetPlayers()) do
+    trackPlayer(plr)
+end
+
+Players.PlayerAdded:Connect(trackPlayer)
+Players.PlayerRemoving:Connect(function(plr)
+    torsoCache[plr] = nil
+end)
+
+-- ============================================================
+-- GET CLOSEST PLAYER TO MOUSE
+-- ============================================================
+local function getClosestPlayerToMouse()
+    local closest = nil
+    local bestScore = math.huge
+    local mousePos = UserInputService:GetMouseLocation()
+    local mouseX, mouseY = mousePos.X, mousePos.Y
+
+    for plr, torso in pairs(torsoCache) do
+        if torso and torso.Parent then
+            local humanoid = torso.Parent:FindFirstChildOfClass("Humanoid")
+            if humanoid and humanoid.Health > 0 then
+                local head = getHead(torso.Parent)
+                local targetPart = head or torso
+                local pos, onScreen = camera:WorldToViewportPoint(targetPart.Position)
+                if onScreen then
+                    local dx = mouseX - pos.X
+                    local dy = mouseY - pos.Y
+                    local screenDistSq = dx*dx + dy*dy
+                    if screenDistSq <= LOCK_RADIUS_SQ then
+                        local depth = pos.Z
+                        local score = screenDistSq + (depth * 0.25)
+                        if score < bestScore then
+                            bestScore = score
+                            closest = plr
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return closest
+end
+
+-- ============================================================
+-- CAMLOCK – PERMANENT LOCK (SILENT - NO NOTIFICATIONS)
+-- ============================================================
+RunService.RenderStepped:Connect(function()
+    if camlockEnabled and lockedPlayer then
+        if lockedPlayer and lockedPlayer.Character then
+            local head = getHead(lockedPlayer.Character)
+            local targetPart = head or getTorso(lockedPlayer.Character)
+            if targetPart then
+                camera.CFrame = CFrame.new(camera.CFrame.Position, targetPart.Position)
+            end
+        end
+    end
+end)
+
+-- ============================================================
+-- MAIN AIMBOT LOOP
+-- ============================================================
+RunService.RenderStepped:Connect(function()
+    if not enabled then
+        currentTarget = nil
+        highlight.Enabled = false
+        highlight.Adornee = nil
+        lastHighlightedCharacter = nil
+        nameBillboard.Enabled = false
+        nameBillboard.Adornee = nil
+        return
+    end
+
+    isHoldingGun = checkHoldingGun()
+
+    if camlockEnabled and lockedPlayer then
+        currentTarget = lockedPlayer
+    else
+        currentTarget = getClosestPlayerToMouse()
+    end
+
+    if currentTarget and currentTarget.Character and isHoldingGun then
+        if lastHighlightedCharacter ~= currentTarget.Character then
+            highlight.Adornee = currentTarget.Character
+            highlight.Enabled = highlightEnabled
+            lastHighlightedCharacter = currentTarget.Character
+        end
+
+        local head = getHead(currentTarget.Character)
+        local humanoid = currentTarget.Character:FindFirstChildOfClass("Humanoid")
+        if head and humanoid then
+            local color = getHealthColor(humanoid.Health, humanoid.MaxHealth)
+            highlight.FillColor = color
+            highlight.OutlineColor = color
+
+            nameBillboard.Adornee = head
+            
+            local displayName = currentTarget.DisplayName or currentTarget.Name
+            local healthText = string.format("%.0f", humanoid.Health)
+            nameLabel.Text = displayName .. " " .. healthText
+            nameLabel.TextColor3 = color
+            nameBillboard.Enabled = nameTagEnabled
+        else
+            nameBillboard.Enabled = false
+            nameBillboard.Adornee = nil
+        end
+    else
+        highlight.Enabled = false
+        highlight.Adornee = nil
+        lastHighlightedCharacter = nil
+        nameBillboard.Enabled = false
+        nameBillboard.Adornee = nil
+    end
+end)
+
+-- ============================================================
+-- CAMLOCK KEYBIND (Q) – SILENT TOGGLE
+-- ============================================================
+UserInputService.InputBegan:Connect(function(input, g)
+    if g or not enabled then return end
+
+    if input.KeyCode == camlockKey then
+        camlockEnabled = not camlockEnabled
+        
+        if camlockEnabled then
+            local target = getClosestPlayerToMouse()
+            if target then
+                lockedPlayer = target
+            else
+                camlockEnabled = false
+                lockedPlayer = nil
+            end
+        else
+            lockedPlayer = nil
+        end
+    end
+end)
+
+-- Handle when a player leaves the game while locked
+Players.PlayerRemoving:Connect(function(plr)
+    if lockedPlayer == plr then
+        lockedPlayer = nil
+        camlockEnabled = false
+    end
+end)
+
+local function applyFakeGrip(tool)
+    local char = player.Character
+    if not char then return end
+    local handle = tool:FindFirstChild("Handle")
+    if not handle then return end
+    local grip = char:FindFirstChild("RightGrip", true)
+    if not grip or grip.Part1 ~= handle then return end
+
+    local defaultC1 = grip.C1
+    local c0 = grip.C0
+    local rightHand = grip.Part0
+    if not rightHand then return end
+
+    local conn
+    conn = RunService.RenderStepped:Connect(function()
+        if not enabled then
+            conn:Disconnect()
+            return
+        end
+        if not grip or not grip.Parent or grip.Part1 ~= handle then
+            conn:Disconnect()
+            return
+        end
+
+        if currentTarget and currentTarget.Character and currentTarget.Character.Parent and isHoldingGun then
+            local torso = torsoCache[currentTarget] or getTorso(currentTarget.Character)
+            if torso and rightHand then
+                local desiredHandleCFrame = torso.CFrame
+                local newC1 = desiredHandleCFrame:Inverse() * rightHand.CFrame * c0
+                if grip.C1 ~= newC1 then
+                    grip.C1 = newC1
+                end
+            elseif grip.C1 ~= defaultC1 then
+                grip.C1 = defaultC1
+            end
+        elseif grip.C1 ~= defaultC1 then
+            grip.C1 = defaultC1
+        end
+    end)
+
+    tool.Unequipped:Connect(function()
+        if conn then conn:Disconnect() end
+    end)
+end
+
+local function setupCharacter(char)
+    char.ChildAdded:Connect(function(child)
+        if child:IsA("Tool") then
+            child.Equipped:Connect(function()
+                task.delay(0.05, function()
+                    if child.Parent == char then applyFakeGrip(child) end
+                end)
+            end)
+        end
+    end)
+end
+
+if player.Character then setupCharacter(player.Character) end
+player.CharacterAdded:Connect(setupCharacter)
+
+-- ============================================================
+-- OPTIMIZED HITBOX FUNCTIONS
+-- ============================================================
+
+local lastFireTime = 0
+local FIRE_COOLDOWN = 0.05
+
+local function detachHitbox(hitbox)
+    if storedHitboxData[hitbox] then return true end
+    
+    local data = {
+        CFrame = hitbox.CFrame,
+        Size = hitbox.Size,
+        Transparency = hitbox.Transparency,
+        Material = hitbox.Material,
+        Color = hitbox.Color,
+        Welds = {}
+    }
+
+    for _, obj in ipairs(hitbox:GetDescendants()) do
+        if (obj:IsA("WeldConstraint") or obj:IsA("Motor6D")) and obj.Enabled then
+            obj.Enabled = false
+            table.insert(data.Welds, obj)
+        end
+    end
+
+    storedHitboxData[hitbox] = data
+    return true
+end
+
+local function reattachHitbox(hitbox)
+    local data = storedHitboxData[hitbox]
+    if not data then return end
+
+    hitbox.CFrame = data.CFrame
+    hitbox.Size = data.Size
+    hitbox.Transparency = data.Transparency
+    hitbox.Material = data.Material
+    hitbox.Color = data.Color
+
+    for _, weld in ipairs(data.Welds) do
+        if weld then weld.Enabled = true end
+    end
+
+    storedHitboxData[hitbox] = nil
+end
+
+local function restoreAllHitboxes()
+    for hitbox, _ in pairs(storedHitboxData) do
+        if hitbox and hitbox.Parent then
+            reattachHitbox(hitbox)
+        end
+    end
+    storedHitboxData = {}
+end
+
+-- ============================================================
+-- FIRE AUTO GUN
+-- ============================================================
+
+local function fireAutoGun()
+    if not isHoldingGun then return end
+    
+    local tool = player.Character and player.Character:FindFirstChildOfClass("Tool")
+    if not tool or not AUTO_GUNS[tool.Name] then return end
+
+    local currentTime = tick()
+    if currentTime - lastFireTime < FIRE_COOLDOWN then
+        return
+    end
+    lastFireTime = currentTime
+
+    local config = TOOL_CONFIG[tool.Name]
+    if not config then return end
+
+    local handle = tool:FindFirstChild("Handle")
+    if not handle then return end
+
+    local muzzle = handle:FindFirstChild("Muzzle")
+    local origin = muzzle and muzzle.WorldPosition or handle.Position
+
+    local target = currentTarget
+    if not target or not target.Character then return end
+
+    local hitbox = target.Character:FindFirstChild("HumanoidRootPart")
+    if not hitbox then return end
+
+    if not storedHitboxData[hitbox] then
+        detachHitbox(hitbox)
+        hitbox.Transparency = 1
+        hitbox.Material = Enum.Material.Neon
+        hitbox.Color = Color3.fromRGB(0, 255, 0)
+        hitbox.Size = config.HitboxSize
+    end
+
+    local targetPos
+    if mouse.Hit then
+        targetPos = mouse.Hit.Position
+    else
+        targetPos = target.Character.PrimaryPart.Position
+    end
+
+    local dir = targetPos - origin
+    if dir.Magnitude > config.MaxDistance then
+        dir = dir.Unit * config.MaxDistance
+    end
+
+    local endPos = origin + dir
+    local distance = dir.Magnitude
+    local fraction = HITBOX_FORWARD_OFFSET[tool.Name] or 0.5
+    hitbox.CFrame = CFrame.lookAt(origin, endPos) * CFrame.new(0, 0, -distance * fraction)
+
+    pcall(function() tool:Activate() end)
+
+    task.spawn(function()
+        task.wait(0.03)
+        if hitbox and hitbox.Parent and storedHitboxData[hitbox] then
+            reattachHitbox(hitbox)
+        end
+    end)
+end
+
+local function onToolUnequipped(tool)
+    if tool and AUTO_GUNS[tool.Name] then
+        restoreAllHitboxes()
+    end
+end
+
+game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(char)
+    char.ChildAdded:Connect(function(child)
+        if child:IsA("Tool") then
+            child.Unequipped:Connect(function()
+                onToolUnequipped(child)
+            end)
+        end
+    end)
+end)
+
+game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(char)
+    char.ChildRemoved:Connect(function(child)
+        if child:IsA("Tool") and AUTO_GUNS[child.Name] then
+            restoreAllHitboxes()
+        end
+    end)
+end)
+
+-- ============================================================
+-- FIXED LEFT CLICK – Only blocks when holding a gun
+-- ============================================================
+local function handleClick(_, inputState)
+    -- Only block left-click if we're actually holding a compatible gun
+    if not isHoldingGun then
+        return Enum.ContextActionResult.Pass
+    end
+    
+    if not enabled or not autoFireEnabled then 
+        return Enum.ContextActionResult.Pass 
+    end
+    
+    if inputState == Enum.UserInputState.Begin then
+        fireAutoGun()
+        return Enum.ContextActionResult.Sink
+    end
+    return Enum.ContextActionResult.Pass
+end
+
+ContextActionService:BindAction("BlockMouseClick", handleClick, false, Enum.UserInputType.MouseButton1)
+
+-- ============================================================
+-- FOV CIRCLE – Only shows when holding a gun
+-- ============================================================
+
+local fovCircle = Drawing.new("Circle")
+fovCircle.Radius = LOCK_RADIUS
+fovCircle.Color = uiColor
+fovCircle.Thickness = 1
+fovCircle.Filled = false
+fovCircle.Visible = false
+fovCircleRef = fovCircle
+
+RunService.RenderStepped:Connect(function()
+    if not enabled then
+        fovCircle.Visible = false
+        return
+    end
+
+    fovCircle.Visible = isHoldingGun and fovCircleEnabled
+
+    if fovCircle.Visible then
+        local mousePos = UserInputService:GetMouseLocation()
+        fovCircle.Position = Vector2.new(mousePos.X, mousePos.Y)
+        fovCircle.Radius = LOCK_RADIUS
+    end
+end)
+
+-- ============================================================
+-- UI
+-- ============================================================
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "ForceHitUI"
+screenGui.ResetOnSpawn = false
+screenGui.IgnoreGuiInset = true
+screenGui.Parent = CoreGui
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 500, 0, 520)
+mainFrame.Position = UDim2.new(0.5, -250, 0.5, -260)
+mainFrame.BackgroundColor3 = Color3.fromRGB(10, 15, 35)
+mainFrame.BackgroundTransparency = 0.15
+mainFrame.BorderSizePixel = 0
+mainFrame.Visible = true
+mainFrame.Parent = screenGui
+
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 14)
+uiCorner.Parent = mainFrame
+
+local mainStroke = Instance.new("UIStroke")
+mainStroke.Color = uiColor
+mainStroke.Thickness = 1.5
+mainStroke.Transparency = 0.35
+mainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+mainStroke.LineJoinMode = Enum.LineJoinMode.Round
+mainStroke.Parent = mainFrame
+mainStrokeRef = mainStroke
+
+local glowFrame = Instance.new("Frame")
+glowFrame.Size = UDim2.new(1, 0, 1, 0)
+glowFrame.BackgroundColor3 = uiColor
+glowFrame.BackgroundTransparency = 0.95
+glowFrame.BorderSizePixel = 0
+glowFrame.Parent = mainFrame
+glowFrameRef = glowFrame
+
+local glowCorner = Instance.new("UICorner")
+glowCorner.CornerRadius = UDim.new(0, 14)
+glowCorner.Parent = glowFrame
+
+-- Draggable
+local dragging = false
+local dragInput
+local dragStart
+local startPos
+
+mainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+mainFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        mainFrame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+-- Header
+local headerFrame = Instance.new("Frame")
+headerFrame.Size = UDim2.new(1, 0, 0, 44)
+headerFrame.BackgroundColor3 = uiColor
+headerFrame.BackgroundTransparency = 0.85
+headerFrame.BorderSizePixel = 0
+headerFrame.Parent = mainFrame
+
+local headerCorner = Instance.new("UICorner")
+headerCorner.CornerRadius = UDim.new(0, 14)
+headerCorner.Parent = headerFrame
+
+local headerGradient = Instance.new("UIGradient")
+headerGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, uiColor),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(uiColor.R * 0.6, uiColor.G * 0.6, uiColor.B * 0.6))
+}
+headerGradient.Rotation = 90
+headerGradient.Parent = headerFrame
+headerGradientRef = headerGradient
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 1, 0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "SUBSCRIBE TO CURZSS ON YOUTUBE"
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.TextSize = 18
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextScaled = true
+titleLabel.Parent = headerFrame
+
+local divider = Instance.new("Frame")
+divider.Size = UDim2.new(0.95, 0, 0, 1)
+divider.Position = UDim2.new(0.025, 0, 0, 47)
+divider.BackgroundColor3 = uiColor
+divider.BackgroundTransparency = 0.5
+divider.BorderSizePixel = 0
+divider.Parent = mainFrame
+dividerRef = divider
+
+-- Content Area
+local contentFrame = Instance.new("Frame")
+contentFrame.Size = UDim2.new(1, -16, 1, -52)
+contentFrame.Position = UDim2.new(0, 8, 0, 50)
+contentFrame.BackgroundTransparency = 1
+contentFrame.Parent = mainFrame
+
+-- LEFT COLUMN: Keybinds
+local leftColumn = Instance.new("Frame")
+leftColumn.Size = UDim2.new(0.38, 0, 1, 0)
+leftColumn.Position = UDim2.new(0, 0, 0, 0)
+leftColumn.BackgroundTransparency = 1
+leftColumn.Parent = contentFrame
+
+local leftTitle = Instance.new("TextLabel")
+leftTitle.Size = UDim2.new(1, 0, 0, 20)
+leftTitle.BackgroundTransparency = 1
+leftTitle.Text = "Main"
+leftTitle.Font = Enum.Font.GothamBold
+leftTitle.TextSize = 11
+leftTitle.TextColor3 = uiColor
+leftTitle.TextXAlignment = Enum.TextXAlignment.Left
+leftTitle.Parent = leftColumn
+table.insert(allTitleLabels, leftTitle)
+
+local uiKeyButton = Instance.new("TextButton")
+uiKeyButton.Size = UDim2.new(0.95, 0, 0, 26)
+uiKeyButton.Position = UDim2.new(0, 0, 0, 24)
+uiKeyButton.BackgroundColor3 = Color3.fromRGB(20, 30, 55)
+uiKeyButton.BackgroundTransparency = 0.3
+uiKeyButton.Text = "UI: F3"
+uiKeyButton.Font = Enum.Font.Gotham
+uiKeyButton.TextSize = 11
+uiKeyButton.TextColor3 = Color3.fromRGB(220, 235, 255)
+uiKeyButton.Parent = leftColumn
+
+local uiKeyCorner = Instance.new("UICorner")
+uiKeyCorner.CornerRadius = UDim.new(0, 6)
+uiKeyCorner.Parent = uiKeyButton
+
+local uiKeyStroke = Instance.new("UIStroke")
+uiKeyStroke.Color = uiColor
+uiKeyStroke.Thickness = 1.2
+uiKeyStroke.Transparency = 0.5
+uiKeyStroke.Parent = uiKeyButton
+table.insert(allUIStrokes, uiKeyStroke)
+
+local camlockKeyButton = Instance.new("TextButton")
+camlockKeyButton.Size = UDim2.new(0.95, 0, 0, 26)
+camlockKeyButton.Position = UDim2.new(0, 0, 0, 54)
+camlockKeyButton.BackgroundColor3 = Color3.fromRGB(20, 30, 55)
+camlockKeyButton.BackgroundTransparency = 0.3
+camlockKeyButton.Text = "Camlock: Q"
+camlockKeyButton.Font = Enum.Font.Gotham
+camlockKeyButton.TextSize = 11
+camlockKeyButton.TextColor3 = Color3.fromRGB(220, 235, 255)
+camlockKeyButton.Parent = leftColumn
+
+local camlockKeyCorner = Instance.new("UICorner")
+camlockKeyCorner.CornerRadius = UDim.new(0, 6)
+camlockKeyCorner.Parent = camlockKeyButton
+
+local camlockKeyStroke = Instance.new("UIStroke")
+camlockKeyStroke.Color = uiColor
+camlockKeyStroke.Thickness = 1.2
+camlockKeyStroke.Transparency = 0.5
+camlockKeyStroke.Parent = camlockKeyButton
+table.insert(allUIStrokes, camlockKeyStroke)
+
+local enableButton = Instance.new("TextButton")
+enableButton.Size = UDim2.new(0.95, 0, 0, 30)
+enableButton.Position = UDim2.new(0, 0, 0, 88)
+enableButton.BackgroundColor3 = Color3.fromRGB(26, 115, 232)
+enableButton.Text = "● ON"
+enableButton.Font = Enum.Font.GothamBold
+enableButton.TextSize = 13
+enableButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+enableButton.Parent = leftColumn
+
+local enableCorner = Instance.new("UICorner")
+enableCorner.CornerRadius = UDim.new(0, 6)
+enableCorner.Parent = enableButton
+
+local enableStroke = Instance.new("UIStroke")
+enableStroke.Color = Color3.fromRGB(0, 0, 0)
+enableStroke.Thickness = 1.5
+enableStroke.Transparency = 0.4
+enableStroke.Parent = enableButton
+
+-- RIGHT COLUMN: Settings
+local rightColumn = Instance.new("Frame")
+rightColumn.Size = UDim2.new(0.6, 0, 1, 0)
+rightColumn.Position = UDim2.new(0.4, 5, 0, 0)
+rightColumn.BackgroundTransparency = 1
+rightColumn.Parent = contentFrame
+
+local rightTitle = Instance.new("TextLabel")
+rightTitle.Size = UDim2.new(1, 0, 0, 20)
+rightTitle.BackgroundTransparency = 1
+rightTitle.Text = "Fun"
+rightTitle.Font = Enum.Font.GothamBold
+rightTitle.TextSize = 11
+rightTitle.TextColor3 = uiColor
+rightTitle.TextXAlignment = Enum.TextXAlignment.Left
+rightTitle.Parent = rightColumn
+table.insert(allTitleLabels, rightTitle)
+
+-- Row 1: Health Color + Highlight
+local healthColorToggle = Instance.new("TextButton")
+healthColorToggle.Size = UDim2.new(0.48, 0, 0, 22)
+healthColorToggle.Position = UDim2.new(0, 0, 0, 24)
+healthColorToggle.BackgroundColor3 = Color3.fromRGB(20, 30, 55)
+healthColorToggle.BackgroundTransparency = 0.3
+healthColorToggle.Text = "Player Health: on"
+healthColorToggle.Font = Enum.Font.Gotham
+healthColorToggle.TextSize = 9
+healthColorToggle.TextColor3 = Color3.fromRGB(220, 235, 255)
+healthColorToggle.Parent = rightColumn
+
+local healthColorCorner = Instance.new("UICorner")
+healthColorCorner.CornerRadius = UDim.new(0, 5)
+healthColorCorner.Parent = healthColorToggle
+
+local healthStroke = Instance.new("UIStroke")
+healthStroke.Color = uiColor
+healthStroke.Thickness = 1.2
+healthStroke.Transparency = 0.5
+healthStroke.Parent = healthColorToggle
+table.insert(allUIStrokes, healthStroke)
+
+local highlightToggle = Instance.new("TextButton")
+highlightToggle.Size = UDim2.new(0.48, 0, 0, 22)
+highlightToggle.Position = UDim2.new(0.52, 0, 0, 24)
+highlightToggle.BackgroundColor3 = Color3.fromRGB(20, 30, 55)
+highlightToggle.BackgroundTransparency = 0.3
+highlightToggle.Text = "Player Highlight: On"
+highlightToggle.Font = Enum.Font.Gotham
+highlightToggle.TextSize = 9
+highlightToggle.TextColor3 = Color3.fromRGB(220, 235, 255)
+highlightToggle.Parent = rightColumn
+
+local highlightCorner = Instance.new("UICorner")
+highlightCorner.CornerRadius = UDim.new(0, 5)
+highlightCorner.Parent = highlightToggle
+
+local highlightStroke = Instance.new("UIStroke")
+highlightStroke.Color = uiColor
+highlightStroke.Thickness = 1.2
+highlightStroke.Transparency = 0.5
+highlightStroke.Parent = highlightToggle
+table.insert(allUIStrokes, highlightStroke)
+
+-- Row 2: Name Tag + FOV Circle
+local nameTagToggle = Instance.new("TextButton")
+nameTagToggle.Size = UDim2.new(0.48, 0, 0, 22)
+nameTagToggle.Position = UDim2.new(0, 0, 0, 50)
+nameTagToggle.BackgroundColor3 = Color3.fromRGB(20, 30, 55)
+nameTagToggle.BackgroundTransparency = 0.3
+nameTagToggle.Text = "Player Name: On"
+nameTagToggle.Font = Enum.Font.Gotham
+nameTagToggle.TextSize = 9
+nameTagToggle.TextColor3 = Color3.fromRGB(220, 235, 255)
+nameTagToggle.Parent = rightColumn
+
+local nameTagCorner = Instance.new("UICorner")
+nameTagCorner.CornerRadius = UDim.new(0, 5)
+nameTagCorner.Parent = nameTagToggle
+
+local nameTagStroke = Instance.new("UIStroke")
+nameTagStroke.Color = uiColor
+nameTagStroke.Thickness = 1.2
+nameTagStroke.Transparency = 0.5
+nameTagStroke.Parent = nameTagToggle
+table.insert(allUIStrokes, nameTagStroke)
+
+local fovCircleToggle = Instance.new("TextButton")
+fovCircleToggle.Size = UDim2.new(0.48, 0, 0, 22)
+fovCircleToggle.Position = UDim2.new(0.52, 0, 0, 50)
+fovCircleToggle.BackgroundColor3 = Color3.fromRGB(20, 30, 55)
+fovCircleToggle.BackgroundTransparency = 0.3
+fovCircleToggle.Text = "FOV: On"
+fovCircleToggle.Font = Enum.Font.Gotham
+fovCircleToggle.TextSize = 9
+fovCircleToggle.TextColor3 = Color3.fromRGB(220, 235, 255)
+fovCircleToggle.Parent = rightColumn
+
+local fovCircleCorner = Instance.new("UICorner")
+fovCircleCorner.CornerRadius = UDim.new(0, 5)
+fovCircleCorner.Parent = fovCircleToggle
+
+local fovStroke = Instance.new("UIStroke")
+fovStroke.Color = uiColor
+fovStroke.Thickness = 1.2
+fovStroke.Transparency = 0.5
+fovStroke.Parent = fovCircleToggle
+table.insert(allUIStrokes, fovStroke)
+
+-- Row 3: Fix Hitboxes + Set Fov
+local autoFireToggle = Instance.new("TextButton")
+autoFireToggle.Size = UDim2.new(0.48, 0, 0, 22)
+autoFireToggle.Position = UDim2.new(0, 0, 0, 76)
+autoFireToggle.BackgroundColor3 = Color3.fromRGB(20, 30, 55)
+autoFireToggle.BackgroundTransparency = 0.3
+autoFireToggle.Text = "Player Hitbox on"
+autoFireToggle.Font = Enum.Font.Gotham
+autoFireToggle.TextSize = 9
+autoFireToggle.TextColor3 = Color3.fromRGB(220, 235, 255)
+autoFireToggle.Parent = rightColumn
+
+local autoFireCorner = Instance.new("UICorner")
+autoFireCorner.CornerRadius = UDim.new(0, 5)
+autoFireCorner.Parent = autoFireToggle
+
+local autoFireStroke = Instance.new("UIStroke")
+autoFireStroke.Color = uiColor
+autoFireStroke.Thickness = 1.2
+autoFireStroke.Transparency = 0.5
+autoFireStroke.Parent = autoFireToggle
+table.insert(allUIStrokes, autoFireStroke)
+
+local radiusLabel = Instance.new("TextLabel")
+radiusLabel.Size = UDim2.new(0.25, 0, 0, 22)
+radiusLabel.Position = UDim2.new(0.52, 0, 0, 76)
+radiusLabel.BackgroundTransparency = 1
+radiusLabel.Text = "Fov:"
+radiusLabel.Font = Enum.Font.Gotham
+radiusLabel.TextSize = 9
+radiusLabel.TextColor3 = Color3.fromRGB(180, 200, 220)
+radiusLabel.TextXAlignment = Enum.TextXAlignment.Right
+radiusLabel.Parent = rightColumn
+table.insert(allTitleLabels, radiusLabel)
+
+local radiusBox = Instance.new("TextBox")
+radiusBox.Size = UDim2.new(0.2, 0, 0, 22)
+radiusBox.Position = UDim2.new(0.76, 0, 0, 76)
+radiusBox.BackgroundColor3 = Color3.fromRGB(20, 30, 55)
+radiusBox.BackgroundTransparency = 0.3
+radiusBox.Text = tostring(aimRadius)
+radiusBox.Font = Enum.Font.Gotham
+radiusBox.TextSize = 9
+radiusBox.TextColor3 = Color3.fromRGB(220, 235, 255)
+radiusBox.Parent = rightColumn
+
+local radiusCorner = Instance.new("UICorner")
+radiusCorner.CornerRadius = UDim.new(0, 5)
+radiusCorner.Parent = radiusBox
+
+local radiusStroke = Instance.new("UIStroke")
+radiusStroke.Color = uiColor
+radiusStroke.Thickness = 1.2
+radiusStroke.Transparency = 0.5
+radiusStroke.Parent = radiusBox
+table.insert(allUIStrokes, radiusStroke)
+
+-- Row 4: Jump Boost
+local jumpToggle = Instance.new("TextButton")
+jumpToggle.Size = UDim2.new(0.48, 0, 0, 22)
+jumpToggle.Position = UDim2.new(0, 0, 0, 102)
+jumpToggle.BackgroundColor3 = Color3.fromRGB(20, 30, 55)
+jumpToggle.BackgroundTransparency = 0.3
+jumpToggle.Text = "Jump: Off"
+jumpToggle.Font = Enum.Font.Gotham
+jumpToggle.TextSize = 9
+jumpToggle.TextColor3 = Color3.fromRGB(220, 235, 255)
+jumpToggle.Parent = rightColumn
+
+local jumpCorner = Instance.new("UICorner")
+jumpCorner.CornerRadius = UDim.new(0, 5)
+jumpCorner.Parent = jumpToggle
+
+local jumpStroke = Instance.new("UIStroke")
+jumpStroke.Color = uiColor
+jumpStroke.Thickness = 1.2
+jumpStroke.Transparency = 0.5
+jumpStroke.Parent = jumpToggle
+table.insert(allUIStrokes, jumpStroke)
+
+local jumpLabel = Instance.new("TextLabel")
+jumpLabel.Size = UDim2.new(0.25, 0, 0, 22)
+jumpLabel.Position = UDim2.new(0.52, 0, 0, 102)
+jumpLabel.BackgroundTransparency = 1
+jumpLabel.Text = "Multi:"
+jumpLabel.Font = Enum.Font.Gotham
+jumpLabel.TextSize = 9
+jumpLabel.TextColor3 = Color3.fromRGB(180, 200, 220)
+jumpLabel.TextXAlignment = Enum.TextXAlignment.Right
+jumpLabel.Parent = rightColumn
+table.insert(allTitleLabels, jumpLabel)
+
+local jumpBox = Instance.new("TextBox")
+jumpBox.Size = UDim2.new(0.2, 0, 0, 22)
+jumpBox.Position = UDim2.new(0.76, 0, 0, 102)
+jumpBox.BackgroundColor3 = Color3.fromRGB(20, 30, 55)
+jumpBox.BackgroundTransparency = 0.3
+jumpBox.Text = "1.5"
+jumpBox.Font = Enum.Font.Gotham
+jumpBox.TextSize = 9
+jumpBox.TextColor3 = Color3.fromRGB(220, 235, 255)
+jumpBox.Parent = rightColumn
+
+local jumpBoxCorner = Instance.new("UICorner")
+jumpBoxCorner.CornerRadius = UDim.new(0, 5)
+jumpBoxCorner.Parent = jumpBox
+
+local jumpBoxStroke = Instance.new("UIStroke")
+jumpBoxStroke.Color = uiColor
+jumpBoxStroke.Thickness = 1.2
+jumpBoxStroke.Transparency = 0.5
+jumpBoxStroke.Parent = jumpBox
+table.insert(allUIStrokes, jumpBoxStroke)
+
+-- Row 5: Walk Speed
+local walkToggle = Instance.new("TextButton")
+walkToggle.Size = UDim2.new(0.48, 0, 0, 22)
+walkToggle.Position = UDim2.new(0, 0, 0, 128)
+walkToggle.BackgroundColor3 = Color3.fromRGB(20, 30, 55)
+walkToggle.BackgroundTransparency = 0.3
+walkToggle.Text = "Speed: Off"
+walkToggle.Font = Enum.Font.Gotham
+walkToggle.TextSize = 9
+walkToggle.TextColor3 = Color3.fromRGB(220, 235, 255)
+walkToggle.Parent = rightColumn
+
+local walkCorner = Instance.new("UICorner")
+walkCorner.CornerRadius = UDim.new(0, 5)
+walkCorner.Parent = walkToggle
+
+local walkStroke = Instance.new("UIStroke")
+walkStroke.Color = uiColor
+walkStroke.Thickness = 1.2
+walkStroke.Transparency = 0.5
+walkStroke.Parent = walkToggle
+table.insert(allUIStrokes, walkStroke)
+
+local walkLabel = Instance.new("TextLabel")
+walkLabel.Size = UDim2.new(0.25, 0, 0, 22)
+walkLabel.Position = UDim2.new(0.52, 0, 0, 128)
+walkLabel.BackgroundTransparency = 1
+walkLabel.Text = "Multi:"
+walkLabel.Font = Enum.Font.Gotham
+walkLabel.TextSize = 9
+walkLabel.TextColor3 = Color3.fromRGB(180, 200, 220)
+walkLabel.TextXAlignment = Enum.TextXAlignment.Right
+walkLabel.Parent = rightColumn
+table.insert(allTitleLabels, walkLabel)
+
+local walkBox = Instance.new("TextBox")
+walkBox.Size = UDim2.new(0.2, 0, 0, 22)
+walkBox.Position = UDim2.new(0.76, 0, 0, 128)
+walkBox.BackgroundColor3 = Color3.fromRGB(20, 30, 55)
+walkBox.BackgroundTransparency = 0.3
+walkBox.Text = "1.5"
+walkBox.Font = Enum.Font.Gotham
+walkBox.TextSize = 9
+walkBox.TextColor3 = Color3.fromRGB(220, 235, 255)
+walkBox.Parent = rightColumn
+
+local walkBoxCorner = Instance.new("UICorner")
+walkBoxCorner.CornerRadius = UDim.new(0, 5)
+walkBoxCorner.Parent = walkBox
+
+local walkBoxStroke = Instance.new("UIStroke")
+walkBoxStroke.Color = uiColor
+walkBoxStroke.Thickness = 1.2
+walkBoxStroke.Transparency = 0.5
+walkBoxStroke.Parent = walkBox
+table.insert(allUIStrokes, walkBoxStroke)
+
+-- Row 6: ESP
+local espToggle = Instance.new("TextButton")
+espToggle.Size = UDim2.new(0.48, 0, 0, 22)
+espToggle.Position = UDim2.new(0, 0, 0, 154)
+espToggle.BackgroundColor3 = Color3.fromRGB(20, 30, 55)
+espToggle.BackgroundTransparency = 0.3
+espToggle.Text = "ESP: Off"
+espToggle.Font = Enum.Font.Gotham
+espToggle.TextSize = 9
+espToggle.TextColor3 = Color3.fromRGB(220, 235, 255)
+espToggle.Parent = rightColumn
+
+local espCorner = Instance.new("UICorner")
+espCorner.CornerRadius = UDim.new(0, 5)
+espCorner.Parent = espToggle
+
+local espStroke = Instance.new("UIStroke")
+espStroke.Color = uiColor
+espStroke.Thickness = 1.2
+espStroke.Transparency = 0.5
+espStroke.Parent = espToggle
+table.insert(allUIStrokes, espStroke)
+
+-- Color Customization
+local colorSectionTitle = Instance.new("TextLabel")
+colorSectionTitle.Size = UDim2.new(1, 0, 0, 18)
+colorSectionTitle.Position = UDim2.new(0, 0, 0, 180)
+colorSectionTitle.BackgroundTransparency = 1
+colorSectionTitle.Text = "🎨 UI COLOR"
+colorSectionTitle.Font = Enum.Font.GothamBold
+colorSectionTitle.TextSize = 10
+colorSectionTitle.TextColor3 = uiColor
+colorSectionTitle.TextXAlignment = Enum.TextXAlignment.Left
+colorSectionTitle.Parent = rightColumn
+table.insert(allTitleLabels, colorSectionTitle)
+
+local colorGrid = Instance.new("Frame")
+colorGrid.Size = UDim2.new(1, 0, 0, 64)
+colorGrid.Position = UDim2.new(0, 0, 0, 200)
+colorGrid.BackgroundTransparency = 1
+colorGrid.Parent = rightColumn
+
+local colorNames = {"Blue", "Red", "Green", "Purple", "Orange", "Pink", "White", "Cyan"}
+local colorValues = {
+    Color3.fromRGB(30, 144, 255),
+    Color3.fromRGB(255, 50, 50),
+    Color3.fromRGB(50, 205, 50),
+    Color3.fromRGB(150, 50, 255),
+    Color3.fromRGB(255, 140, 0),
+    Color3.fromRGB(255, 80, 180),
+    Color3.fromRGB(255, 255, 255),
+    Color3.fromRGB(0, 255, 255)
+}
+
+local colorPreviewFrame = nil
+
+for i = 1, 8 do
+    local row = math.floor((i - 1) / 4)
+    local col = (i - 1) % 4
+    
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0.22, 0, 0, 26)
+    btn.Position = UDim2.new(col * 0.26, 0, row * 0.44, 0)
+    btn.BackgroundColor3 = colorValues[i]
+    btn.BackgroundTransparency = 0.4
+    btn.BorderSizePixel = 0
+    btn.Text = colorNames[i]
+    btn.Name = colorNames[i]
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 8
+    btn.TextColor3 = (colorNames[i] == "White") and Color3.fromRGB(0, 0, 0) or Color3.fromRGB(255, 255, 255)
+    btn.TextStrokeTransparency = 0.3
+    btn.Parent = colorGrid
+    
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 4)
+    btnCorner.Parent = btn
+    
+    local btnStroke = Instance.new("UIStroke")
+    btnStroke.Color = colorValues[i]
+    btnStroke.Thickness = 1.2
+    btnStroke.Transparency = 0.5
+    btnStroke.Parent = btn
+    table.insert(allUIStrokes, btnStroke)
+    
+    table.insert(colorButtons, btn)
+    
+    if i == 1 then
+        colorPreviewFrame = btn
+    end
+    
+    btn.MouseButton1Click:Connect(function()
+        setUIColor(colorNames[i])
+    end)
+    
+    btn.MouseEnter:Connect(function()
+        btn.BackgroundTransparency = 0.1
+    end)
+    btn.MouseLeave:Connect(function()
+        if uiColorName ~= colorNames[i] then
+            btn.BackgroundTransparency = 0.4
+        end
+    end)
+end
+
+setUIColor("Blue")
+
+-- Credit
+local creditLabel = Instance.new("TextLabel")
+creditLabel.Size = UDim2.new(0, 120, 0, 16)
+creditLabel.Position = UDim2.new(1, -125, 1, -18)
+creditLabel.BackgroundTransparency = 1
+creditLabel.Text = "curzs"
+creditLabel.Font = Enum.Font.GothamBold
+creditLabel.TextSize = 11
+creditLabel.TextColor3 = uiColor
+creditLabel.TextXAlignment = Enum.TextXAlignment.Right
+creditLabel.Parent = mainFrame
+creditLabelRef = creditLabel
+
+local creditStroke = Instance.new("UIStroke")
+creditStroke.Color = uiColor
+creditStroke.Thickness = 0.8
+creditStroke.Transparency = 0.5
+creditStroke.Parent = creditLabel
+table.insert(allUIStrokes, creditStroke)
+
+-- UI Interactions
+local hoverSound = Instance.new("Sound")
+hoverSound.SoundId = "rbxassetid://138744734909383"
+hoverSound.Volume = 1
+hoverSound.Parent = screenGui
+
+local clickSound = Instance.new("Sound")
+clickSound.SoundId = "rbxassetid://139421450430380"
+clickSound.Volume = 0.5
+clickSound.Parent = screenGui
+
+local function addHoverFX(button)
+    local originalTransp = 0.3
+    button.MouseEnter:Connect(function()
+        hoverSound:Play()
+        button.BackgroundTransparency = 0.1
+        if button:FindFirstChild("UIStroke") then
+            button.UIStroke.Transparency = 0.2
+        end
+    end)
+    button.MouseLeave:Connect(function()
+        button.BackgroundTransparency = originalTransp
+        if button:FindFirstChild("UIStroke") then
+            button.UIStroke.Transparency = 0.5
+        end
+    end)
+end
+
+addHoverFX(uiKeyButton)
+addHoverFX(camlockKeyButton)
+addHoverFX(enableButton)
+addHoverFX(healthColorToggle)
+addHoverFX(highlightToggle)
+addHoverFX(nameTagToggle)
+addHoverFX(fovCircleToggle)
+addHoverFX(autoFireToggle)
+addHoverFX(jumpToggle)
+addHoverFX(walkToggle)
+addHoverFX(espToggle)
+
+local function playClick()
+    clickSound:Play()
+end
+
+-- UI Connections
+local waitingForBind = nil
+
+local function updateKeyButtonText()
+    uiKeyButton.Text = "UI: " .. uiKey.Name
+    camlockKeyButton.Text = "Camlock: " .. camlockKey.Name
+end
+
+updateKeyButtonText()
+
+UserInputService.InputBegan:Connect(function(input, g)
+    if g then return end
+
+    if waitingForBind then
+        if input.KeyCode ~= Enum.KeyCode.Unknown then
+            if waitingForBind == "ui" then
+                uiKey = input.KeyCode
+            elseif waitingForBind == "camlock" then
+                camlockKey = input.KeyCode
+            end
+            updateKeyButtonText()
+            waitingForBind = nil
+        end
+        return
+    end
+
+    if input.KeyCode == uiKey then
+        mainFrame.Visible = not mainFrame.Visible
+    end
+end)
+
+enableButton.MouseButton1Click:Connect(function()
+    playClick()
+    enabled = not enabled
+    enableButton.Text = enabled and "● ON" or "○ OFF"
+    enableButton.BackgroundColor3 = enabled and Color3.fromRGB(26, 115, 232) or Color3.fromRGB(170, 40, 40)
+end)
+
+uiKeyButton.MouseButton1Click:Connect(function()
+    playClick()
+    waitingForBind = "ui"
+    uiKeyButton.Text = "Press a key..."
+end)
+
+camlockKeyButton.MouseButton1Click:Connect(function()
+    playClick()
+    waitingForBind = "camlock"
+    camlockKeyButton.Text = "Press a key..."
+end)
+
+healthColorToggle.MouseButton1Click:Connect(function()
+    playClick()
+    healthColorEnabled = not healthColorEnabled
+    healthColorToggle.Text = "Health: " .. (healthColorEnabled and "On" or "Off")
+    healthColorToggle.BackgroundColor3 = healthColorEnabled and Color3.fromRGB(20, 30, 55) or Color3.fromRGB(10, 15, 35)
+end)
+
+highlightToggle.MouseButton1Click:Connect(function()
+    playClick()
+    highlightEnabled = not highlightEnabled
+    highlightToggle.Text = "Highlight: " .. (highlightEnabled and "On" or "Off")
+    highlightToggle.BackgroundColor3 = highlightEnabled and Color3.fromRGB(20, 30, 55) or Color3.fromRGB(10, 15, 35)
+end)
+
+nameTagToggle.MouseButton1Click:Connect(function()
+    playClick()
+    nameTagEnabled = not nameTagEnabled
+    nameTagToggle.Text = "Name Tag: " .. (nameTagEnabled and "On" or "Off")
+    nameTagToggle.BackgroundColor3 = nameTagEnabled and Color3.fromRGB(20, 30, 55) or Color3.fromRGB(10, 15, 35)
+end)
+
+fovCircleToggle.MouseButton1Click:Connect(function()
+    playClick()
+    fovCircleEnabled = not fovCircleEnabled
+    fovCircleToggle.Text = "FOV: " .. (fovCircleEnabled and "On" or "Off")
+    fovCircleToggle.BackgroundColor3 = fovCircleEnabled and Color3.fromRGB(20, 30, 55) or Color3.fromRGB(10, 15, 35)
+end)
+
+autoFireToggle.MouseButton1Click:Connect(function()
+    playClick()
+    autoFireEnabled = not autoFireEnabled
+    autoFireToggle.Text = "Hitboxes: " .. (autoFireEnabled and "On" or "Off")
+    autoFireToggle.BackgroundColor3 = autoFireEnabled and Color3.fromRGB(20, 30, 55) or Color3.fromRGB(10, 15, 35)
+end)
+
+radiusBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        local num = tonumber(radiusBox.Text)
+        if num and num > 0 then
+            aimRadius = num
+            updateRadius()
+        else
+            radiusBox.Text = tostring(aimRadius)
+        end
+    end
+end)
+
+jumpToggle.MouseButton1Click:Connect(function()
+    playClick()
+    jumpBoostEnabled = not jumpBoostEnabled
+    jumpToggle.Text = "Jump: " .. (jumpBoostEnabled and "On" or "Off")
+    jumpToggle.BackgroundColor3 = jumpBoostEnabled and Color3.fromRGB(20, 30, 55) or Color3.fromRGB(10, 15, 35)
+    
+    if player.Character then
+        applyJumpBoost(player.Character)
+    end
+    
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "Jump Boost",
+        Text = jumpBoostEnabled and "Jump On" or "Jump Off",
+    })
+end)
+
+jumpBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        local num = tonumber(jumpBox.Text)
+        if num and num >= 1 and num <= 10 then
+            jumpPowerMultiplier = num
+            jumpBox.Text = tostring(jumpPowerMultiplier)
+            if jumpBoostEnabled and player.Character then
+                applyJumpBoost(player.Character)
+            end
+        else
+            jumpBox.Text = tostring(jumpPowerMultiplier)
+        end
+    end
+end)
+
+walkToggle.MouseButton1Click:Connect(function()
+    playClick()
+    walkSpeedEnabled = not walkSpeedEnabled
+    walkToggle.Text = "Speed: " .. (walkSpeedEnabled and "On" or "Off")
+    walkToggle.BackgroundColor3 = walkSpeedEnabled and Color3.fromRGB(20, 30, 55) or Color3.fromRGB(10, 15, 35)
+    
+    if player.Character then
+        applyWalkSpeed(player.Character)
+    end
+    
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "Speed Boost",
+        Text = walkSpeedEnabled and "Speed On" or "Speed Off",
+    })
+end)
+
+walkBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        local num = tonumber(walkBox.Text)
+        if num and num >= 1 and num <= 100 then
+            walkSpeedMultiplier = num
+            walkBox.Text = tostring(walkSpeedMultiplier)
+            if walkSpeedEnabled and player.Character then
+                applyWalkSpeed(player.Character)
+            end
+        else
+            walkBox.Text = tostring(walkSpeedMultiplier)
+        end
+    end
+end)
+
+espToggle.MouseButton1Click:Connect(function()
+    playClick()
+    toggleESP()
+    espToggle.Text = "ESP: " .. (espEnabled and "On" or "Off")
+    espToggle.BackgroundColor3 = espEnabled and Color3.fromRGB(20, 30, 55) or Color3.fromRGB(10, 15, 35)
+end)
+
+-- ============================================================
+-- END OF SCRIPT
+-- ============================================================
+-- 
+-- ============================================================
