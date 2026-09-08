@@ -1,48 +1,48 @@
 game.StarterGui:SetCore(
-	"SendNotification",
+	string.char(83,101,110,100,78,111,116,105,102,105,99,97,116,105,111,110),
 	{
-		Title = "curzs aimlock",
-		Text = "curzs aimlock",
+		Title = string.char(99,117,114,122,115,32,97,105,109,108,111,99,107),
+		Text = string.char(99,117,114,122,115,32,97,105,109,108,111,99,107),
 	}
 )
 wait(1)
 game.StarterGui:SetCore(
-	"SendNotification",
+	string.char(83,101,110,100,78,111,116,105,102,105,99,97,116,105,111,110),
 	{
-		Title = "curzs aimlock",
-		Text = "curzs aimlock loading",
+		Title = string.char(99,117,114,122,115,32,97,105,109,108,111,99,107),
+		Text = string.char(99,117,114,122,115,32,97,105,109,108,111,99,107,32,108,111,97,100,105,110,103),
 	}
 )
  
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/slattisbabygirl/cattoware/main/Wcatto.lua"))()
+local Library = loadstring(game:HttpGet(string.char(104,116,116,112,115,58,47,47,114,97,119,46,103,105,116,104,117,98,117,115,101,114,99,111,110,116,101,110,116,46,99,111,109,47,115,108,97,116,116,105,115,98,97,98,121,103,105,114,108,47,99,97,116,116,111,119,97,114,101,47,109,97,105,110,47,87,99,97,116,116,111,46,108,117,97)))()
  
-local NotifyLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/Kinlei/Dynissimo/main/Scripts/AkaliNotif.lua"))()
+local NotifyLibrary = loadstring(game:HttpGet(string.char(104,116,116,112,115,58,47,47,114,97,119,46,103,105,116,104,117,98,117,115,101,114,99,111,110,116,101,110,116,46,99,111,109,47,75,105,110,108,101,105,47,68,121,110,105,115,115,105,109,111,47,109,97,105,110,47,83,99,114,105,112,116,115,47,65,107,97,108,105,78,111,116,105,102,46,108,117,97)))()
 local Notify = NotifyLibrary.Notify
 Library.theme.accentcolor = Color3.fromRGB(0, 0, 0)
 Library.theme.accentcolor2 = Color3.fromRGB(255, 255, 255)
  
-local Window = Library:CreateWindow("CURZS LOCK", Vector2.new(492, 598), Enum.KeyCode.P)
+local Window = Library:CreateWindow(string.char(67,85,82,90,83,32,76,79,67,75), Vector2.new(492, 598), Enum.KeyCode.P)
  
-local AimingTab = Window:CreateTab("sub to me")
+local AimingTab = Window:CreateTab(string.char(115,117,98,32,116,111,32,109,101))
  
-local LegitTab = Window:CreateTab("hi")
+local LegitTab = Window:CreateTab(string.char(104,105))
  
-local FunTab = Window:CreateTab("ily")
+local FunTab = Window:CreateTab(string.char(105,108,121))
  
-local MiscTab = Window:CreateTab("yt curzs")
+local MiscTab = Window:CreateTab(string.char(121,116,32,99,117,114,122,115))
  
-local sector1 = AimingTab:CreateSector("lock = q", "left")
+local sector1 = AimingTab:CreateSector(string.char(108,111,99,107,32,61,32,113), string.char(108,101,102,116))
  
-sector1:AddButton("press this", function()
+sector1:AddButton(string.char(112,114,101,115,115,32,116,104,105,115), function()
 	getgenv().NemesisPreBeta = {
-		["Settings"] = {
-			Disabling = {Toggle = false, Keybind = "H"},
+		[string.char(83,101,116,116,105,110,103,115)] = {
+			Disabling = {Toggle = false, Keybind = string.char(72)},
 			UpdateTickDelay = 0.05
 		},
-		["Camlock"] = {
+		[string.char(67,97,109,108,111,99,107)] = {
 			Toggling = {
 				Enable = true, 
-				Keybind = "Q"
+				Keybind = string.char(81)
 			},
 			Settings = {
 				Prediction = { 
@@ -70,10 +70,10 @@ sector1:AddButton("press this", function()
 					Knocked = false, 
 					CrewID = false
 				},
-				BodyParts = {"HumanoidRootPart", "Head"}
+				BodyParts = {string.char(72,117,109,97,110,111,105,100,82,111,111,116,80,97,114,116), string.char(72,101,97,100)}
 			}
 		},
-		["Silent"] = {
+		[string.char(83,105,108,101,110,116)] = {
 			Toggling = { Enable = false },
 			Settings = {
 				Prediction = { true , 0.11934 , false, 0.003 },
@@ -88,28 +88,28 @@ sector1:AddButton("press this", function()
 			},
 			Conditions = {
 				Player = { WallCheck = false, Grabbed = false, Knocked = false, CrewID = false },
-				BodyParts = {"HumanoidRootPart", "UpperTorso", "Head"}
+				BodyParts = {string.char(72,117,109,97,110,111,105,100,82,111,111,116,80,97,114,116), string.char(85,112,112,101,114,84,111,114,115,111), string.char(72,101,97,100)}
 			}
 		},
-		["Field Of View"] = {
+		[string.char(70,105,101,108,100,32,79,102,32,86,105,101,119)] = {
 			Enable = true, 
 			Size = 1000, 
 			Color = Color3.fromRGB(255, 255, 255), 
 		},
-		["Miscs"] = {
-			["Sorting"] = {
+		[string.char(77,105,115,99,115)] = {
+			[string.char(83,111,114,116,105,110,103)] = {
 				Toggled = false,
-				Key = "F",
+				Key = string.char(70),
 				alphabetically = true,
 				Ammo = false,
 				Custom = {
 					Enable = false,
-					List = {[1] = "[Revolver]", [2] = "[Chicken]"} -- // etc
+					List = {[1] = string.char(91,82,101,118,111,108,118,101,114,93), [2] = string.char(91,67,104,105,99,107,101,110,93)} -- // etc
 				}
 			},
-			["Animation"] = {
+			[string.char(65,110,105,109,97,116,105,111,110)] = {
 				Enable = true,
-				Animations = {["Greet"] = {[1] = false, [2] = "V"}}
+				Animations = {[string.char(71,114,101,101,116)] = {[1] = false, [2] = string.char(86)}}
 			}
 		}
 	}
@@ -118,8 +118,8 @@ sector1:AddButton("press this", function()
  
  
  
-	local DUpvalue, Round, V3, V2, CF, Rservice, UserInput, Ping, Mouse, backpack  = debug.getupvalue, math.round, Vector3.new, Vector2.new, CFrame.new, game:GetService("RunService"), game:GetService("UserInputService"), game:GetService("Stats").PerformanceStats.Ping, game:GetService("Players").LocalPlayer:GetMouse(), game:GetService("Players").LocalPlayer.Backpack
-	local Players, Self, Character, Camera = game:GetService("Players"), game:GetService("Players").LocalPlayer, game:GetService("Players").LocalPlayer.Character or  game:GetService("Players").LocalPlayer.CharacterAdded:Wait(), game:GetService("Workspace").CurrentCamera
+	local DUpvalue, Round, V3, V2, CF, Rservice, UserInput, Ping, Mouse, backpack  = debug.getupvalue, math.round, Vector3.new, Vector2.new, CFrame.new, game:GetService(string.char(82,117,110,83,101,114,118,105,99,101)), game:GetService(string.char(85,115,101,114,73,110,112,117,116,83,101,114,118,105,99,101)), game:GetService(string.char(83,116,97,116,115)).PerformanceStats.Ping, game:GetService(string.char(80,108,97,121,101,114,115)).LocalPlayer:GetMouse(), game:GetService(string.char(80,108,97,121,101,114,115)).LocalPlayer.Backpack
+	local Players, Self, Character, Camera = game:GetService(string.char(80,108,97,121,101,114,115)), game:GetService(string.char(80,108,97,121,101,114,115)).LocalPlayer, game:GetService(string.char(80,108,97,121,101,114,115)).LocalPlayer.Character or  game:GetService(string.char(80,108,97,121,101,114,115)).LocalPlayer.CharacterAdded:Wait(), game:GetService(string.char(87,111,114,107,115,112,97,99,101)).CurrentCamera
 	local idx, endp
  
  
@@ -180,13 +180,13 @@ sector1:AddButton("press this", function()
  
 	function Grabbed(player)
 		if player.Character ~= nil  then
-			return not player.Character:FindFirstChild("GRABBING_CONSTRAINT")
+			return not player.Character:FindFirstChild(string.char(71,82,65,66,66,73,78,71,95,67,79,78,83,84,82,65,73,78,84))
 		end
 	end
  
 	function Knocked(player)
 		if player.Character ~= nil  then
-			return player.Character.BodyEffects["K.O"].Value ~= true
+			return player.Character.BodyEffects[string.char(75,46,79)].Value ~= true
 		end
 	end
  
@@ -206,11 +206,11 @@ sector1:AddButton("press this", function()
 	end
  
 	function Crew(player)
-		if game.Players.LocalPlayer:FindFirstChild("DataFolder"):FindFirstChild("Information"):FindFirstChild("Crew") then
-			local SelfCrewValue =  game.Players.LocalPlayer:FindFirstChild("DataFolder"):FindFirstChild("Information"):FindFirstChild("Crew")
+		if game.Players.LocalPlayer:FindFirstChild(string.char(68,97,116,97,70,111,108,100,101,114)):FindFirstChild(string.char(73,110,102,111,114,109,97,116,105,111,110)):FindFirstChild(string.char(67,114,101,119)) then
+			local SelfCrewValue =  game.Players.LocalPlayer:FindFirstChild(string.char(68,97,116,97,70,111,108,100,101,114)):FindFirstChild(string.char(73,110,102,111,114,109,97,116,105,111,110)):FindFirstChild(string.char(67,114,101,119))
 			if SelfCrewValue.Value ~= 0 then
-				if player:FindFirstChild("DataFolder"):FindFirstChild("Information"):FindFirstChild("Crew")  then
-					local Enimy = player:FindFirstChild("DataFolder"):FindFirstChild("Information"):FindFirstChild("Crew")
+				if player:FindFirstChild(string.char(68,97,116,97,70,111,108,100,101,114)):FindFirstChild(string.char(73,110,102,111,114,109,97,116,105,111,110)):FindFirstChild(string.char(67,114,101,119))  then
+					local Enimy = player:FindFirstChild(string.char(68,97,116,97,70,111,108,100,101,114)):FindFirstChild(string.char(73,110,102,111,114,109,97,116,105,111,110)):FindFirstChild(string.char(67,114,101,119))
 					if Enimy.Value == SelfCrewValue.Value then
 						return false
 					end
@@ -252,11 +252,11 @@ sector1:AddButton("press this", function()
  
  
 	function GetClosest(table)
-		local MaxDistance = getgenv().NemesisPreBeta["Field Of View"].Enable and getgenv().NemesisPreBeta["Field Of View"].Size or math.huge
+		local MaxDistance = getgenv().NemesisPreBeta[string.char(70,105,101,108,100,32,79,102,32,86,105,101,119)].Enable and getgenv().NemesisPreBeta[string.char(70,105,101,108,100,32,79,102,32,86,105,101,119)].Size or math.huge
 		local Target
  
 		for i,v in pairs(Players:GetPlayers()) do
-			if v ~= Self and v.Character ~= nil and v.Character:FindFirstChild("HumanoidRootPart") and v.Character:FindFirstChild("Head") then
+			if v ~= Self and v.Character ~= nil and v.Character:FindFirstChild(string.char(72,117,109,97,110,111,105,100,82,111,111,116,80,97,114,116)) and v.Character:FindFirstChild(string.char(72,101,97,100)) then
 				local ViewPort, Visible = Camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
 				local Mag = (UserInput:GetMouseLocation() - Vector2.new(ViewPort.X, ViewPort.Y)).Magnitude
 				if MaxDistance > Mag and Visible and (
@@ -280,7 +280,7 @@ sector1:AddButton("press this", function()
 			local currentPos, currentTime
 			local connection
 			connection =
-				game:GetService("RunService").Heartbeat:Connect(
+				game:GetService(string.char(82,117,110,83,101,114,118,105,99,101)).Heartbeat:Connect(
 			function()
 				currentPos = Target.Character.HumanoidRootPart.Position
 				currentTime = tick()
@@ -291,16 +291,16 @@ sector1:AddButton("press this", function()
 			local velocity = (currentPos - pos) / (currentTime - lastTime)
 			return Vector3.new(math.floor(velocity.X), math.floor(velocity.Y), math.floor(velocity.Z))
 		else
-			return Target.character:FindFirstChild("HumanoidRootPart").AssemblyLinearVelocity
+			return Target.character:FindFirstChild(string.char(72,117,109,97,110,111,105,100,82,111,111,116,80,97,114,116)).AssemblyLinearVelocity
 		end
 	end
  
 	function playAnimation(animationName)
 		local args = {
-			[1] = "AnimationPack",
+			[1] = string.char(65,110,105,109,97,116,105,111,110,80,97,99,107),
 			[2] = animationName,
 		}
-		game:GetService("ReplicatedStorage").MainEvent:FireServer(unpack(args))
+		game:GetService(string.char(82,101,112,108,105,99,97,116,101,100,83,116,111,114,97,103,101)).MainEvent:FireServer(unpack(args))
 	end
  
  
@@ -310,10 +310,10 @@ sector1:AddButton("press this", function()
 		local SilentTable = getgenv().NemesisPreBeta.Silent
 		if SilentTable.Toggling.Enable then
 			Storage.targets[2] = GetClosest(SilentTable.Conditions.Player)
-			if Storage.targets[2] ~= nil and Storage.targets[2].Character ~= nil and Storage.targets[2].Character:FindFirstChild("HumanoidRootPart") then
+			if Storage.targets[2] ~= nil and Storage.targets[2].Character ~= nil and Storage.targets[2].Character:FindFirstChild(string.char(72,117,109,97,110,111,105,100,82,111,111,116,80,97,114,116)) then
 				Storage.bodyparts[2] =  tostring(Closespart(Storage.targets[2], SilentTable.Conditions.BodyParts))
 				local position = Storage.targets[2].Character[Storage.bodyparts[2]].Position
-				if SilentTable.Settings.OffSets.Jump.Enable and Storage.targets[2].Character:FindFirstChildOfClass("Humanoid"):GetState() == Enum.HumanoidStateType.Freefall then
+				if SilentTable.Settings.OffSets.Jump.Enable and Storage.targets[2].Character:FindFirstChildOfClass(string.char(72,117,109,97,110,111,105,100)):GetState() == Enum.HumanoidStateType.Freefall then
 					position = position + SilentTable.Settings.OffSets.Jump[1]
 				end
 				Storage.CFposition = position + (SilentTable.Settings.Prediction and Velocity(Storage.targets[2], SilentTable.Settings.Resolver) * GetPrediction() or 0)
@@ -327,7 +327,7 @@ sector1:AddButton("press this", function()
 		if Storage.etc.Ctoggled and CamLockTable.Toggling.Enable and Storage.targets[1] ~= nil and Storage.targets[1].Character ~= nil then
 			local position = Storage.targets[1].Character[Storage.bodyparts[1]].Position
  
-			if CamLockTable.Settings.OffSets.Jump.Enable and Storage.targets[1].Character:FindFirstChildOfClass("Humanoid"):GetState() == Enum.HumanoidStateType.Freefall then
+			if CamLockTable.Settings.OffSets.Jump.Enable and Storage.targets[1].Character:FindFirstChildOfClass(string.char(72,117,109,97,110,111,105,100)):GetState() == Enum.HumanoidStateType.Freefall then
 				position = position + CamLockTable.Settings.OffSets.Jump[1]
 			end
  
@@ -370,7 +370,7 @@ sector1:AddButton("press this", function()
 				end
 				for i,v in pairs(Storage.Drawings) do
 					if v and v.__OBJECT_EXISTS then
-						print("f")
+						print(string.char(102))
 					end
 				end
 			end
@@ -383,7 +383,7 @@ sector1:AddButton("press this", function()
 				if getgenv().NemesisPreBeta.Miscs.Sorting.Custom.Enable then
 					for _, customName in ipairs(getgenv().NemesisPreBeta.Miscs.Sorting.Custom.List) do
 						for _, item in pairs(backpack:GetChildren()) do
-							if item:IsA("Tool") and item.Name == customName then
+							if item:IsA(string.char(84,111,111,108)) and item.Name == customName then
 								table.insert(items, 1, item)
 								break
 							end
@@ -392,7 +392,7 @@ sector1:AddButton("press this", function()
 				end
  
 				for _, item in pairs(backpack:GetChildren()) do
-					if item:IsA("Tool") and (not getgenv().NemesisPreBeta.Miscs.Sorting.Custom.Enable or not isInCustomList(item.Name)) then
+					if item:IsA(string.char(84,111,111,108)) and (not getgenv().NemesisPreBeta.Miscs.Sorting.Custom.Enable or not isInCustomList(item.Name)) then
 						table.insert(items, item)
 					end
 				end
@@ -447,17 +447,17 @@ sector1:AddButton("press this", function()
 	for connection, index in next, getconnections(workspace.CurrentCamera.Changed) do
 		index:Disable()
 	end
-	for connection, index in next, getconnections(workspace.CurrentCamera:GetPropertyChangedSignal("CFrame")) do
+	for connection, index in next, getconnections(workspace.CurrentCamera:GetPropertyChangedSignal(string.char(67,70,114,97,109,101))) do
 		index:Disable()
 	end
  
  
 	local oldIndex
-	oldIndex = hookmetamethod(game, "__index", function(t, k)
-		if t:IsA("Mouse") and k == "Hit" or k == "Target" then
+	oldIndex = hookmetamethod(game, string.char(95,95,105,110,100,101,120), function(t, k)
+		if t:IsA(string.char(77,111,117,115,101)) and k == string.char(72,105,116) or k == string.char(84,97,114,103,101,116) then
 			if  getgenv().NemesisPreBeta.Silent.Toggling.Enable and Chance(getgenv().NemesisPreBeta.Silent.Settings.HitChance, 100) and Storage.targets[2] ~= nil then
 				local Hit = CFrame.new(Storage.CFposition)
-				return (k == "Hit" and Hit)
+				return (k == string.char(72,105,116) and Hit)
 			end
 		end
 		return oldIndex(t, k)
@@ -474,15 +474,15 @@ local Settings1 = {
 }
  
 for __, v in pairs(game.CoreGui.RobloxGui.PerformanceStats:GetChildren()) do
-	if v.Name == "PS_Button" and v.StatsMiniTextPanelClass.TitleLabel.Text == "Mem" then
+	if v.Name == string.char(80,83,95,66,117,116,116,111,110) and v.StatsMiniTextPanelClass.TitleLabel.Text == string.char(77,101,109) then
 		Memory = v.StatsMiniTextPanelClass.ValueLabel
 	end
 end
  
-Memory:GetPropertyChangedSignal("Text"):Connect(function()
+Memory:GetPropertyChangedSignal(string.char(84,101,120,116)):Connect(function()
 	local Random = math.random(Settings1.range1, Settings1.range2)
 	Random = Random * 1.23 
-	Memory.Text = "".. Random .." MB"
+	Memory.Text = "".. Random ..string.char(32,77,66)
 end)
  
 local Settings2 = {
@@ -490,43 +490,43 @@ local Settings2 = {
 	range2 = 1782,
 }
  
-local PerformanceStats = game:GetService("CoreGui"):WaitForChild("RobloxGui"):WaitForChild("PerformanceStats")
+local PerformanceStats = game:GetService(string.char(67,111,114,101,71,117,105)):WaitForChild(string.char(82,111,98,108,111,120,71,117,105)):WaitForChild(string.char(80,101,114,102,111,114,109,97,110,99,101,83,116,97,116,115))
 local PingLabel
  
 for _, Child in next, PerformanceStats:GetChildren() do
-	if Child.StatsMiniTextPanelClass.TitleLabel.Text == "Ping" then
+	if Child.StatsMiniTextPanelClass.TitleLabel.Text == string.char(80,105,110,103) then
 		PingLabel = Child.StatsMiniTextPanelClass.ValueLabel
 		break
 	end
 end
  
-local text = "0.00 ms"
-PingLabel:GetPropertyChangedSignal("Text"):Connect(function()
+local text = string.char(48,46,48,48,32,109,115)
+PingLabel:GetPropertyChangedSignal(string.char(84,101,120,116)):Connect(function()
 	local RandomPing = math.random(Settings2.range1, Settings2.range2) / 100
-	PingLabel.Text = string.format("%.2f ms", RandomPing)
+	PingLabel.Text = string.format(string.char(37,46,50,102,32,109,115), RandomPing)
 end)
  
-local sector3 = FunTab:CreateSector("Resolution", "right")
+local sector3 = FunTab:CreateSector(string.char(82,101,115,111,108,117,116,105,111,110), string.char(114,105,103,104,116))
  
-sector3:AddButton("Stretch Resolution", function()
+sector3:AddButton(string.char(83,116,114,101,116,99,104,32,82,101,115,111,108,117,116,105,111,110), function()
 	getgenv().Resolution = {
-		[" "] = 0.65
+		[string.char(32)] = 0.65
 	}
  
 	local Camera = workspace.CurrentCamera
 	if getgenv().gg_scripters == nil then
-		game:GetService("RunService").RenderStepped:Connect(
+		game:GetService(string.char(82,117,110,83,101,114,118,105,99,101)).RenderStepped:Connect(
 		function()
-			Camera.CFrame = Camera.CFrame * CFrame.new(0, 0, 0, 1, 0, 0, 0, getgenv().Resolution[" "], 0, 0, 0, 1)
+			Camera.CFrame = Camera.CFrame * CFrame.new(0, 0, 0, 1, 0, 0, 0, getgenv().Resolution[string.char(32)], 0, 0, 0, 1)
 		end
 		)
 	end
-	getgenv().gg_scripters = " "
+	getgenv().gg_scripters = string.char(32)
 end)
  
-local sector4 = MiscTab:CreateSector("NO DELAY", "right")
+local sector4 = MiscTab:CreateSector(string.char(78,79,32,68,69,76,65,89), string.char(114,105,103,104,116))
  
-sector4:AddButton("EXECUTE", function()
+sector4:AddButton(string.char(69,88,69,67,85,84,69), function()
 	local ReplicatedStorage = game.ReplicatedStorage
 	local Network = game.Network
 	local Delay = ReplicatedStorage.BulletHole.Delay
@@ -536,9 +536,9 @@ sector4:AddButton("EXECUTE", function()
 end)
  
  
-local sector6 = LegitTab:CreateSector("Anti-AimViewer", "left")
+local sector6 = LegitTab:CreateSector(string.char(65,110,116,105,45,65,105,109,86,105,101,119,101,114), string.char(108,101,102,116))
  
-sector6:AddButton("EXECUTE", function()
+sector6:AddButton(string.char(69,88,69,67,85,84,69), function()
 	local China = setmetatable({}, {
 		__index = function(Company, Price)
 			return game:GetService(Price)
@@ -551,15 +551,15 @@ sector6:AddButton("EXECUTE", function()
 	local LocalPlayer = Players.LocalPlayer
 	local Mouse =  LocalPlayer:GetMouse()
  
-	local MainEvent = ReplicatedStorage:FindFirstChild("MainEvent") or nil
+	local MainEvent = ReplicatedStorage:FindFirstChild(string.char(77,97,105,110,69,118,101,110,116)) or nil
 	local Tool = nil
  
 	Bypass = function(Entity)
 		Entity.ChildAdded:Connect(function(Child)
-			if Child:IsA("Tool") then
+			if Child:IsA(string.char(84,111,111,108)) then
 				Tool = Child.Activated:Connect(function()
 					if MainEvent then
-						MainEvent:FireServer("UpdateMousePos", Mouse.Hit.Position)
+						MainEvent:FireServer(string.char(85,112,100,97,116,101,77,111,117,115,101,80,111,115), Mouse.Hit.Position)
 					end
 				end)
 			end
@@ -569,7 +569,7 @@ sector6:AddButton("EXECUTE", function()
  
  
 	local Alive = function(Player)
-		return Player and Player.Character and Player.Character:FindFirstChild("Humanoid") and Player.Character:FindFirstChild("Head") or false
+		return Player and Player.Character and Player.Character:FindFirstChild(string.char(72,117,109,97,110,111,105,100)) and Player.Character:FindFirstChild(string.char(72,101,97,100)) or false
 	end
  
 	LocalPlayer.CharacterAdded:Connect(function(Character)
@@ -582,13 +582,13 @@ sector6:AddButton("EXECUTE", function()
 	end
  
 	local Hook
-	Hook = hookmetamethod(game, "__namecall", function(self, ...)
+	Hook = hookmetamethod(game, string.char(95,95,110,97,109,101,99,97,108,108), function(self, ...)
 		local Args = {...}
 		local Method = getnamecallmethod()
  
-		if not checkcaller() and Method == "FireServer" and self.Name == "MainEvent" and Args[1] == "UpdateMousePos" then
+		if not checkcaller() and Method == string.char(70,105,114,101,83,101,114,118,101,114) and self.Name == string.char(77,97,105,110,69,118,101,110,116) and Args[1] == string.char(85,112,100,97,116,101,77,111,117,115,101,80,111,115) then
  
-			Args[2] = "curzs made this" and Mouse.Hit.Position
+			Args[2] = string.char(99,117,114,122,115,32,109,97,100,101,32,116,104,105,115) and Mouse.Hit.Position
  
 			return self.FireServer(self, unpack(Args))
 		end
@@ -597,32 +597,32 @@ sector6:AddButton("EXECUTE", function()
 	end)
 end)
  
-local sector7 = LegitTab:CreateSector("Legit-AntiLock-V1", "right")
+local sector7 = LegitTab:CreateSector(string.char(76,101,103,105,116,45,65,110,116,105,76,111,99,107,45,86,49), string.char(114,105,103,104,116))
  
-sector7:AddButton("EXECUTE", function()
+sector7:AddButton(string.char(69,88,69,67,85,84,69), function()
 	getgenv().Underground = true 
 	getgenv().UndergroundAmount = 90
  
-	game:GetService("RunService").heartbeat:Connect(function()
+	game:GetService(string.char(82,117,110,83,101,114,118,105,99,101)).heartbeat:Connect(function()
 		if getgenv().Underground ~= false then 
 			local vel = game.Players.LocalPlayer.Character.HumanoidRootPart.Velocity
 			game.Players.LocalPlayer.Character.HumanoidRootPart.Velocity = Vector3.new(0,-         getgenv().UndergroundAmount,0) 
-			game:GetService("RunService").RenderStepped:Wait()
+			game:GetService(string.char(82,117,110,83,101,114,118,105,99,101)).RenderStepped:Wait()
 			game.Players.LocalPlayer.Character.HumanoidRootPart.Velocity = vel
 		end 
 	end)
 end)
  
-local sector8 = MiscTab:CreateSector("AUTO RELOAD", "left")
+local sector8 = MiscTab:CreateSector(string.char(65,85,84,79,32,82,69,76,79,65,68), string.char(108,101,102,116))
  
-sector8:AddButton("EXECUTE", function()
+sector8:AddButton(string.char(69,88,69,67,85,84,69), function()
 	_G.AutoReload = true -- change to false if u don't want it anymore.
  
-	while _G.AutoReload == true and game:GetService("RunService").Heartbeat:Wait() do
-		if game:GetService("Players").LocalPlayer.Character:FindFirstChildWhichIsA("Tool") then
-			if game:GetService("Players").LocalPlayer.Character:FindFirstChildWhichIsA("Tool"):FindFirstChild("Ammo") then
-				if game:GetService("Players").LocalPlayer.Character:FindFirstChildWhichIsA("Tool"):FindFirstChild("Ammo").Value <= 0 then
-					game:GetService("ReplicatedStorage").MainEvent:FireServer("Reload", game:GetService("Players").LocalPlayer.Character:FindFirstChildWhichIsA("Tool")) 
+	while _G.AutoReload == true and game:GetService(string.char(82,117,110,83,101,114,118,105,99,101)).Heartbeat:Wait() do
+		if game:GetService(string.char(80,108,97,121,101,114,115)).LocalPlayer.Character:FindFirstChildWhichIsA(string.char(84,111,111,108)) then
+			if game:GetService(string.char(80,108,97,121,101,114,115)).LocalPlayer.Character:FindFirstChildWhichIsA(string.char(84,111,111,108)):FindFirstChild(string.char(65,109,109,111)) then
+				if game:GetService(string.char(80,108,97,121,101,114,115)).LocalPlayer.Character:FindFirstChildWhichIsA(string.char(84,111,111,108)):FindFirstChild(string.char(65,109,109,111)).Value <= 0 then
+					game:GetService(string.char(82,101,112,108,105,99,97,116,101,100,83,116,111,114,97,103,101)).MainEvent:FireServer(string.char(82,101,108,111,97,100), game:GetService(string.char(80,108,97,121,101,114,115)).LocalPlayer.Character:FindFirstChildWhichIsA(string.char(84,111,111,108))) 
 					wait(1)
 				end
 			end
@@ -631,16 +631,16 @@ sector8:AddButton("EXECUTE", function()
 end)
  
  
-local sector12 = FunTab:CreateSector("CALL ALL", "left")
+local sector12 = FunTab:CreateSector(string.char(67,65,76,76,32,65,76,76), string.char(108,101,102,116))
  
-sector12:AddButton("EXECUTE", function()
-	local StarterGui = game:GetService("StarterGui")
+sector12:AddButton(string.char(69,88,69,67,85,84,69), function()
+	local StarterGui = game:GetService(string.char(83,116,97,114,116,101,114,71,117,105))
 	for i,v in pairs(game.Players:GetChildren()) do
 		if v.Name ~= game.Players.LocalPlayer.Name then
-			game.Players.LocalPlayer.Backpack["[Phone]"].Parent = game.Players.LocalPlayer.Character
-			game.ReplicatedStorage.MainEvent:FireServer("PhoneCall", tostring(v.Name))
+			game.Players.LocalPlayer.Backpack[string.char(91,80,104,111,110,101,93)].Parent = game.Players.LocalPlayer.Character
+			game.ReplicatedStorage.MainEvent:FireServer(string.char(80,104,111,110,101,67,97,108,108), tostring(v.Name))
 			task.wait()
-			game.Players.LocalPlayer.Character["[Phone]"].Parent = game.Players.LocalPlayer.Backpack
+			game.Players.LocalPlayer.Character[string.char(91,80,104,111,110,101,93)].Parent = game.Players.LocalPlayer.Backpack
 			task.wait()
 			local success, result = pcall(StarterGui.SetCoreGuiEnabled, StarterGui, Enum.CoreGuiType.Backpack, true)
 			task.wait(.2)
